@@ -1,0 +1,204 @@
+# OPS-01 — Pull Request Continuous Integration
+#
+# Reference implementation for DOC-RUNBOOK-001 v2.0, section 8.
+# Copy to .github/workflows/ and replace <org>/<app> placeholders to activate.
+#
+# Invariants (do not remove):
+#   - Runs on pull_request AND merge_group so the merge queue re-tests against trunk head.
+#   - Builds the image but NEVER pushes from a PR.
+#   - All gates are required status checks (see Appendix B).
+
+name: CI (Pull Request)
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+  CHART_PATH: charts/app
+
+jobs:
+  # ── G1: commit / PR title convention ───────────────────────────────────────
+  commit-lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Validate Conventional Commit title
+        if: github.event_name == 'pull_request'
+        run: |
+          title="${{ github.event.pull_request.title }}"
+          echo "PR title: $title"
+          grep -Eq '^(feat|fix|perf|refactor|docs|test|build|ci|chore)(\([a-z0-9._-]+\))?!?: .{5,}' <<<"$title" \
+            || { echo "::error::PR title must follow Conventional Commits (see runbook 4.6)"; exit 1; }
+
+      - name: Enforce short-lived branch and PR size (TBD-3 / TBD-4)
+        if: github.event_name == 'pull_request'
+        run: |
+          changed=$(( ${{ github.event.pull_request.additions }} + ${{ github.event.pull_request.deletions }} ))
+          echo "Changed lines: $changed"
+          if [ "$changed" -gt 400 ]; then
+            echo "::warning::PR exceeds the 400-line guideline (TBD-4); decomposition rationale required in the PR body."
+          fi
+
+  # ── G2–G4: static analysis, unit tests, coverage ───────────────────────────
+  unit-test:
+    name: unit-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up toolchain
+        run: echo "Replace with language toolchain setup (setup-node / setup-go / setup-java …)"
+      - name: Format and lint (G2)
+        run: echo "Replace with project linter, e.g. 'npm run lint'"
+      - name: Unit tests (G3)
+        run: echo "Replace with project tests, e.g. 'npm test -- --coverage'"
+      - name: Coverage threshold on changed lines >= 80% (G4)
+        run: echo "Replace with coverage gate, e.g. 'npx jest --coverage --coverageThreshold ...'"
+      - name: Publish test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: |
+            coverage/
+            reports/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  # ── G5: dependency vulnerabilities ─────────────────────────────────────────
+  sca:
+    name: sca
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency vulnerability scan (High/Critical = fail)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+
+  # ── G6–G7: SAST and secret scanning ────────────────────────────────────────
+  sast:
+    name: sast
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Initialize CodeQL (G6)
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript # replace with project languages
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+      - name: Secret scan of branch history (G7)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── G8–G9: image build (no push) and image scan ────────────────────────────
+  build-image:
+    name: build-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image (G8) — build only, never push from a PR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.IMAGE }}:pr-${{ github.event.pull_request.number || github.run_id }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+  image-scan:
+    name: image-scan
+    runs-on: ubuntu-latest
+    needs: build-image
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Rebuild into local daemon for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: local/scan:${{ github.run_id }}
+          cache-from: type=gha
+      - name: Image vulnerability scan (G9)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: local/scan:${{ github.run_id }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+  # ── G10–G11: chart lint, render and policy ─────────────────────────────────
+  helm-lint:
+    name: helm-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with: { version: v3.15.2 }
+      - name: helm lint (G10)
+        run: |
+          helm lint "$CHART_PATH" -f "$CHART_PATH/values.yaml" -f "$CHART_PATH/values-dev.yaml"
+          helm lint "$CHART_PATH" -f "$CHART_PATH/values.yaml" -f "$CHART_PATH/values-prd.yaml"
+      - name: helm template both overlays (G10)
+        run: |
+          mkdir -p rendered
+          helm template app "$CHART_PATH" -f "$CHART_PATH/values.yaml" -f "$CHART_PATH/values-dev.yaml" > rendered/dev.yaml
+          helm template app "$CHART_PATH" -f "$CHART_PATH/values.yaml" -f "$CHART_PATH/values-prd.yaml" > rendered/prd.yaml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered/
+          retention-days: 30
+
+  policy-check:
+    name: policy-check
+    runs-on: ubuntu-latest
+    needs: helm-lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: rendered-manifests, path: rendered }
+      - name: Guardrails — digest pin, probes, limits, non-root (G11)
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in rendered/*.yaml; do
+            echo "== $f"
+            grep -q 'image: .*@sha256:' "$f" || { echo "::error file=$f::image must be digest-pinned (Rule A-1)"; fail=1; }
+            grep -q 'latest' "$f" && { echo "::error file=$f::':latest' tag is prohibited"; fail=1; } || true
+            grep -q 'readinessProbe' "$f" || { echo "::error file=$f::readinessProbe missing (P6)"; fail=1; }
+            grep -q 'livenessProbe'  "$f" || { echo "::error file=$f::livenessProbe missing (P6)"; fail=1; }
+            grep -q 'limits'         "$f" || { echo "::error file=$f::resource limits missing"; fail=1; }
+            grep -q 'runAsNonRoot: true' "$f" || { echo "::error file=$f::runAsNonRoot must be true"; fail=1; }
+          done
+          exit $fail

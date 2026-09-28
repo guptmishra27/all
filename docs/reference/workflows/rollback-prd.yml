@@ -1,0 +1,119 @@
+# OPS-09 — Operator-triggered production rollback
+#
+# Reference implementation for DOC-RUNBOOK-001 v2.0, section 16.
+#
+# Invariants (do not remove):
+#   - No build, no approval wait: on-call may roll back without prior approval (OPS-09 authority).
+#   - Evidence is captured BEFORE the rollback so forensic data survives pod recycling.
+#   - Every run records who, when, which revision and why (evidence E12).
+
+name: OPS-09 Rollback (PRD)
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Helm revision to roll back to (blank = previous revision)'
+        required: false
+        type: string
+      reason:
+        description: 'Incident ID and reason (mandatory, recorded as audit evidence)'
+        required: true
+        type: string
+      skip_evidence:
+        description: 'Skip evidence capture (only when every second counts)'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: cd-prd            # shares the lock with releases: never roll back mid-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NAMESPACE: app-prd
+  RELEASE: app
+
+jobs:
+  rollback:
+    name: Roll back production
+    runs-on: ubuntu-latest
+    environment:
+      name: prd-rollback    # configure with NO required reviewers: containment must not wait
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with: { version: v3.15.2 }
+
+      - name: Authenticate to cluster (OIDC, prd-scoped identity)
+        run: echo "Replace with cluster OIDC login"
+
+      - name: Capture forensic evidence before recycling pods (OPS-09 step 4)
+        if: ${{ !inputs.skip_evidence }}
+        run: |
+          mkdir -p evidence
+          kubectl -n "$NAMESPACE" get all -o yaml                       > evidence/all.yaml       || true
+          kubectl -n "$NAMESPACE" get events --sort-by=.lastTimestamp   > evidence/events.txt     || true
+          kubectl -n "$NAMESPACE" describe deploy "$RELEASE"            > evidence/deploy.txt     || true
+          helm -n "$NAMESPACE" history "$RELEASE" -o yaml               > evidence/helm.yaml      || true
+          for p in $(kubectl -n "$NAMESPACE" get pods -l "app.kubernetes.io/name=$RELEASE" -o name); do
+            n=${p##*/}
+            kubectl -n "$NAMESPACE" logs "$p" --tail=-1 --since=1h      > "evidence/$n.log"       2>/dev/null || true
+            kubectl -n "$NAMESPACE" logs "$p" --previous --tail=-1      > "evidence/$n.prev.log"  2>/dev/null || true
+            kubectl -n "$NAMESPACE" describe "$p"                       > "evidence/$n.describe.txt" 2>/dev/null || true
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !inputs.skip_evidence }}
+        with:
+          name: rollback-evidence-${{ github.run_id }}
+          path: evidence/
+          retention-days: 400
+
+      - name: Determine target revision
+        run: |
+          helm -n "$NAMESPACE" history "$RELEASE"
+          target="${{ inputs.revision }}"
+          if [ -z "$target" ]; then
+            target=$(helm -n "$NAMESPACE" history "$RELEASE" -o json \
+              | jq -r 'map(select(.status=="superseded" or .status=="deployed")) | .[-2].revision')
+          fi
+          [ -n "$target" ] && [ "$target" != "null" ] || { echo "::error::no rollback target found"; exit 1; }
+          echo "TARGET=$target" >> "$GITHUB_ENV"
+          echo "Rolling back to revision $target"
+
+      - name: helm rollback
+        run: |
+          helm -n "$NAMESPACE" rollback "$RELEASE" "$TARGET" --wait --timeout 10m
+
+      - name: Verify recovery (OPS-08 immediate gates)
+        run: |
+          kubectl -n "$NAMESPACE" rollout status "deploy/$RELEASE" --timeout=600s
+          kubectl -n "$NAMESPACE" get deploy "$RELEASE" -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+          kubectl -n "$NAMESPACE" run "rbsmoke-$RANDOM" --rm -i --restart=Never --image=curlimages/curl:8.8.0 -- \
+            sh -c "curl -fsS http://$RELEASE.$NAMESPACE.svc.cluster.local:8080/healthz &&
+                   curl -fsS http://$RELEASE.$NAMESPACE.svc.cluster.local:8080/readyz"
+
+      - name: Audit record (evidence E12)
+        if: always()
+        run: |
+          {
+            echo "### OPS-09 Rollback record"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Operator | ${GITHUB_ACTOR} |"
+            echo "| Timestamp (UTC) | $(date -u +%Y-%m-%dT%H:%M:%SZ) |"
+            echo "| Target revision | ${TARGET:-unresolved} |"
+            echo "| Reason | ${{ inputs.reason }} |"
+            echo "| Result | ${{ job.status }} |"
+            echo ""
+            echo "Follow-up required: freeze this service (OPS-14), raise the incident (§25),"
+            echo "schedule the post-incident review, and remediate via OPS-10 fix-forward."
+          } >> "$GITHUB_STEP_SUMMARY"

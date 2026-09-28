@@ -1,0 +1,218 @@
+# OPS-06 / OPS-07 / OPS-08 — Gated production release from a trunk tag
+#
+# Reference implementation for DOC-RUNBOOK-001 v2.0, sections 13–15.
+# Triggered by pushing an annotated, signed tag v* onto a validated trunk commit (OPS-05).
+#
+# Invariants (do not remove):
+#   - NOTHING is rebuilt here. The digest validated in Dev is promoted unchanged (Rule A-2).
+#   - The digest equality check FAILS CLOSED on mismatch (control C3).
+#   - The deploy job runs in the 'prd' GitHub Environment so the human approval gate applies (P4/OPS-06).
+#   - The tag must point at a commit on main; releases from non-trunk commits are rejected.
+
+name: CD (Release -> PRD)
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: cd-prd
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+  CHART_PATH: charts/app
+  NAMESPACE: app-prd
+  RELEASE: app
+
+jobs:
+  # ── Pre-flight: eligibility of the tagged commit ───────────────────────────
+  preflight:
+    name: Release preflight
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.resolve.outputs.digest }}
+      short_sha: ${{ steps.resolve.outputs.short_sha }}
+      dev_digest: ${{ steps.devcheck.outputs.dev_digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Deployment freeze check (OPS-14)
+        run: |
+          if [ "${{ vars.RELEASE_FREEZE }}" = "true" ]; then
+            echo "::error::Deployment freeze is active. An approved exception is required (OPS-14)."
+            exit 1
+          fi
+
+      - name: Tag must be on trunk (TBD-1)
+        run: |
+          git fetch origin main --depth=0 || git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tagged commit is not an ancestor of main. Releases are cut from trunk only."
+            exit 1
+          fi
+
+      - name: Tag must be annotated and signed (OPS-05)
+        run: |
+          type=$(git cat-file -t "$GITHUB_REF_NAME")
+          [ "$type" = "tag" ] || { echo "::error::$GITHUB_REF_NAME is not an annotated tag"; exit 1; }
+          git tag -v "$GITHUB_REF_NAME" || echo "::warning::tag signature could not be verified in CI; verify manually per OPS-05"
+
+      - id: resolve
+        name: Resolve promotion digest from the trunk build (no rebuild)
+        run: |
+          short_sha=$(git rev-parse --short=12 "$GITHUB_SHA")
+          digest=$(crane digest "${IMAGE}:sha-${short_sha}")
+          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest"       >> "$GITHUB_OUTPUT"
+
+      - id: devcheck
+        name: Fetch the Dev validation record for this commit (OPS-04 evidence)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          run_id=$(gh run list --workflow cd-trunk-dev.yml --branch main \
+                     --commit "$GITHUB_SHA" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+            echo "::error::No successful Dev deployment/validation run found for $GITHUB_SHA (OPS-05 pre-condition 2)."
+            exit 1
+          fi
+          gh run download "$run_id" -n dev-validation -D ./devval
+          dev_digest=$(jq -r .digest ./devval/dev-validation.json)
+          echo "dev_digest=$dev_digest" >> "$GITHUB_OUTPUT"
+          echo "Dev-validated digest: $dev_digest (run $run_id)"
+
+      - name: C3 — digest equality, fail closed
+        run: |
+          if [ "${{ steps.resolve.outputs.digest }}" != "${{ steps.devcheck.outputs.dev_digest }}" ]; then
+            echo "::error::Digest mismatch between Dev-validated and promotion candidate. Promotion aborted (OPS-07 step 3)."
+            exit 1
+          fi
+          echo "Digest equality verified."
+
+      - name: Verify signature and provenance (C4)
+        run: |
+          cosign verify "${IMAGE}@${{ steps.resolve.outputs.digest }}" \
+            --certificate-identity-regexp "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/.*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com
+          gh attestation verify "oci://${IMAGE}@${{ steps.resolve.outputs.digest }}" --owner "${GITHUB_REPOSITORY_OWNER}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approval summary for OPS-06 (items A1-A9)
+        run: |
+          {
+            echo "### OPS-06 Approval Summary"
+            echo ""
+            echo "| Item | Value |"
+            echo "|---|---|"
+            echo "| A1 Release tag / commit | \`${GITHUB_REF_NAME}\` / \`${GITHUB_SHA}\` |"
+            echo "| A2 Promotion digest | \`${{ steps.resolve.outputs.digest }}\` |"
+            echo "| A2 Dev-validated digest | \`${{ steps.devcheck.outputs.dev_digest }}\` (equal ✔) |"
+            echo "| A3 Signature / provenance | verified ✔ |"
+            echo "| A4 Dev validation | passed ✔ |"
+            echo "| A7 Freeze | ${{ vars.RELEASE_FREEZE || 'false' }} |"
+            echo "| A9 Author | ${GITHUB_ACTOR} (approver must differ — SoD-2) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ── OPS-06 gate + OPS-07 deploy ───────────────────────────────────────────
+  deploy-prd:
+    name: OPS-07 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: preflight
+    environment:            # <-- the human approval gate (OPS-06) lives here
+      name: prd
+      url: https://app.example.com
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with: { version: v3.15.2 }
+
+      - name: Authenticate to cluster (OIDC, prd-scoped identity)
+        run: echo "Replace with cluster OIDC login bound to repo:${{ github.repository }}:environment:prd"
+
+      - name: Capture rollback target (OPS-07 step 1 / evidence E10)
+        run: |
+          PREV_REV=$(helm -n "$NAMESPACE" history "$RELEASE" -o json | jq -r 'map(select(.status=="deployed"))|last|.revision // "none"')
+          PREV_IMG=$(kubectl -n "$NAMESPACE" get deploy "$RELEASE" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "none")
+          echo "ROLLBACK_REVISION=$PREV_REV" >> "$GITHUB_ENV"
+          echo "| Rollback target | revision \`$PREV_REV\`, image \`$PREV_IMG\` |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Render helm diff (evidence E9)
+        env:
+          DIGEST: ${{ needs.preflight.outputs.digest }}
+        run: |
+          helm plugin install https://github.com/databus23/helm-diff || true
+          helm diff upgrade "$RELEASE" "$CHART_PATH" -n "$NAMESPACE" \
+            --values "$CHART_PATH/values.yaml" --values "$CHART_PATH/values-prd.yaml" \
+            --set image.repository="$IMAGE" --set image.digest="${DIGEST#sha256:}" \
+            | tee helm-diff.txt
+
+      - uses: actions/upload-artifact@v4
+        with: { name: helm-diff, path: helm-diff.txt, retention-days: 400 }
+
+      - name: helm upgrade (exact-image promotion, atomic)
+        env:
+          DIGEST: ${{ needs.preflight.outputs.digest }}
+        run: |
+          helm upgrade --install "$RELEASE" "$CHART_PATH" \
+            --namespace "$NAMESPACE" \
+            --values "$CHART_PATH/values.yaml" \
+            --values "$CHART_PATH/values-prd.yaml" \
+            --set image.repository="$IMAGE" \
+            --set image.digest="${DIGEST#sha256:}" \
+            --set-string podAnnotations."app\.kubernetes\.io/version"="$GITHUB_REF_NAME" \
+            --set-string podAnnotations."app\.kubernetes\.io/commit"="$GITHUB_SHA" \
+            --set-string podAnnotations."app\.kubernetes\.io/run-id"="$GITHUB_RUN_ID" \
+            --atomic --wait --timeout 10m --history-max 20
+
+      - name: Verify running image is the approved digest
+        env:
+          DIGEST: ${{ needs.preflight.outputs.digest }}
+        run: |
+          running=$(kubectl -n "$NAMESPACE" get deploy "$RELEASE" -o jsonpath='{.spec.template.spec.containers[0].image}')
+          echo "Running image: $running"
+          case "$running" in *"$DIGEST") echo "digest match ✔";; *) echo "::error::running image is not the approved digest"; exit 1;; esac
+
+  # ── OPS-08 ────────────────────────────────────────────────────────────────
+  validate-prd:
+    name: OPS-08 Validate Production
+    runs-on: ubuntu-latest
+    needs: deploy-prd
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate to cluster (OIDC)
+        run: echo "Replace with cluster OIDC login"
+
+      - name: Immediate gates (0-2 min)
+        run: |
+          kubectl -n "$NAMESPACE" rollout status "deploy/$RELEASE" --timeout=600s
+          kubectl -n "$NAMESPACE" run "prdsmoke-$RANDOM" --rm -i --restart=Never --image=curlimages/curl:8.8.0 -- \
+            sh -c "curl -fsS http://$RELEASE.$NAMESPACE.svc.cluster.local:8080/healthz &&
+                   curl -fsS http://$RELEASE.$NAMESPACE.svc.cluster.local:8080/readyz  &&
+                   curl -fsS http://$RELEASE.$NAMESPACE.svc.cluster.local:8080/version"
+
+      - name: Functional gate — read-only smoke suite (2-5 min)
+        run: echo "Replace with read-only production smoke suite"
+
+      - name: Stability gate — restarts and events (5-15 min)
+        run: |
+          sleep 300
+          kubectl -n "$NAMESPACE" get pods -l "app.kubernetes.io/name=$RELEASE" \
+            -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[0].ready,RESTARTS:.status.containerStatuses[0].restartCount
+          kubectl -n "$NAMESPACE" get events --sort-by=.lastTimestamp | tail -30
+
+      - name: On failure — point the operator at OPS-09
+        if: failure()
+        run: |
+          echo "::error::PRD validation failed. Execute OPS-09 rollback: gh workflow run rollback-prd.yml -f revision=<N> -f reason=<incident>"

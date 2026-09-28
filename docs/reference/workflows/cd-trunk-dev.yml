@@ -1,0 +1,208 @@
+# OPS-02 / OPS-03 / OPS-04 — Trunk build, publish, Dev deploy and validation
+#
+# Reference implementation for DOC-RUNBOOK-001 v2.0, sections 9–11.
+# Copy to .github/workflows/ and replace <org>/<app> and identity placeholders.
+#
+# Invariants (do not remove):
+#   - Image is built ONCE here and referenced by digest everywhere after.
+#   - The digest is exported as a job output and recorded in the run summary so
+#     OPS-07 can prove Dev/PRD artifact equality (control C3).
+#   - helm upgrade uses --atomic --wait so no partially applied release survives.
+
+name: CD (Trunk -> Dev)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-dev
+  cancel-in-progress: false # never cancel a deployment in flight
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+  CHART_PATH: charts/app
+  NAMESPACE: app-dev
+  RELEASE: app
+
+jobs:
+  # ── OPS-02 ────────────────────────────────────────────────────────────────
+  build-publish:
+    name: OPS-02 Build and publish artifact
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+      tag: ${{ steps.meta.outputs.tag }}
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - id: meta
+        name: Derive build metadata
+        run: |
+          short_sha=$(git rev-parse --short=12 HEAD)
+          echo "short_sha=$short_sha"      >> "$GITHUB_OUTPUT"
+          echo "tag=sha-$short_sha"        >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: push
+        name: Build and push (immutable sha- tag)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          sbom: true
+          provenance: mode=max
+
+      - name: Attach SLSA build provenance attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Sign image (keyless, OIDC identity)
+        run: |
+          cosign sign --yes "${IMAGE}@${{ steps.push.outputs.digest }}"
+
+      - name: Scan pushed image (High/Critical = fail)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}@${{ steps.push.outputs.digest }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Record artifact identity in run summary (evidence E3)
+        run: |
+          {
+            echo "### OPS-02 Artifact"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Tag | \`${{ steps.meta.outputs.tag }}\` |"
+            echo "| Digest | \`${{ steps.push.outputs.digest }}\` |"
+            echo "| Run | ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ── OPS-03 ────────────────────────────────────────────────────────────────
+  deploy-dev:
+    name: OPS-03 Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: build-publish
+    environment:
+      name: dev
+      url: https://app-dev.example.com
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with: { version: v3.15.2 }
+
+      - name: Authenticate to cluster (OIDC workload identity)
+        run: echo "Replace with cloud/cluster OIDC login producing a short-lived kubeconfig (SoD-3, P5)"
+
+      - name: Pre-flight — namespace and quota
+        run: |
+          kubectl get ns "$NAMESPACE"
+          kubectl -n "$NAMESPACE" get resourcequota || true
+
+      - name: helm upgrade --install (digest-pinned, atomic)
+        env:
+          DIGEST: ${{ needs.build-publish.outputs.digest }}
+        run: |
+          helm upgrade --install "$RELEASE" "$CHART_PATH" \
+            --namespace "$NAMESPACE" \
+            --values "$CHART_PATH/values.yaml" \
+            --values "$CHART_PATH/values-dev.yaml" \
+            --set image.repository="$IMAGE" \
+            --set image.digest="${DIGEST#sha256:}" \
+            --set-string podAnnotations."app\.kubernetes\.io/commit"="$GITHUB_SHA" \
+            --set-string podAnnotations."app\.kubernetes\.io/run-id"="$GITHUB_RUN_ID" \
+            --atomic --wait --timeout 5m --history-max 5
+
+      - name: Record Helm revision
+        run: |
+          helm -n "$NAMESPACE" history "$RELEASE" --max 3
+
+  # ── OPS-04 ────────────────────────────────────────────────────────────────
+  validate-dev:
+    name: OPS-04 Validate Dev
+    runs-on: ubuntu-latest
+    needs: [build-publish, deploy-dev]
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate to cluster (OIDC workload identity)
+        run: echo "Replace with cluster OIDC login"
+
+      - name: V1-V2 Rollout and pod state
+        run: |
+          kubectl -n "$NAMESPACE" rollout status "deploy/$RELEASE" --timeout=300s
+          kubectl -n "$NAMESPACE" get pods -l "app.kubernetes.io/name=$RELEASE" \
+            -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[0].ready,RESTARTS:.status.containerStatuses[0].restartCount
+
+      - name: V3-V5 Health, readiness and version endpoints
+        run: |
+          kubectl -n "$NAMESPACE" run "smoke-$RANDOM" --rm -i --restart=Never --image=curlimages/curl:8.8.0 -- \
+            sh -c "curl -fsS http://$RELEASE.$NAMESPACE.svc.cluster.local:8080/healthz &&
+                   curl -fsS http://$RELEASE.$NAMESPACE.svc.cluster.local:8080/readyz  &&
+                   curl -fsS http://$RELEASE.$NAMESPACE.svc.cluster.local:8080/version"
+
+      - name: V6 Smoke suite
+        run: echo "Replace with 'tests/smoke' execution against the Dev URL"
+
+      - name: V8 Log sanity
+        run: |
+          kubectl -n "$NAMESPACE" logs -l "app.kubernetes.io/name=$RELEASE" --since=10m --tail=-1 \
+            | grep -Ei 'fatal|panic|unhandled' && { echo "::error::fatal log entries after rollout"; exit 1; } || echo "clean"
+
+      - name: Publish Dev validation record (consumed by OPS-07 digest equality check)
+        env:
+          DIGEST: ${{ needs.build-publish.outputs.digest }}
+        run: |
+          mkdir -p out
+          cat > out/dev-validation.json <<JSON
+          {
+            "commit": "${GITHUB_SHA}",
+            "digest": "${DIGEST}",
+            "tag": "${{ needs.build-publish.outputs.tag }}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "validated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "result": "pass"
+          }
+          JSON
+          cat out/dev-validation.json >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dev-validation
+          path: out/dev-validation.json
+          retention-days: 400
