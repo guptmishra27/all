@@ -12,7 +12,8 @@ Consolidated training and knowledge-transfer handbook for SAP → AWS migrations
 | Artefact | Path | Use |
 |---|---|---|
 | **Training handbook (HTML)** | [`handbook/index.html`](handbook/index.html) | Primary deliverable. Open in any browser: sticky navigation, interactive checklists with saved progress, collapsible knowledge check. Use **Print / save as PDF** for a paginated A4 PDF. |
-| **Training handbook (Word)** | [`handbook/SAP-Migration-Training-Handbook-v1.0.docx`](handbook/SAP-Migration-Training-Handbook-v1.0.docx) | Editable Word version for circulation, annotation and sign-off. Same content and structure; the eight figures are rebuilt as native, editable Word tables. |
+| **Training handbook (Word)** | [`handbook/SAP-Migration-Training-Handbook-v1.0.docx`](handbook/SAP-Migration-Training-Handbook-v1.0.docx) | Consolidated Word edition: live TOC field (updates on open), landscape plates for the wide figures and matrices, all eight figures embedded as images, 71 tables and 15 checklists. |
+| **Pocket reference (Word)** | [`handbook/SAP-Migration-Pocket-Reference-v1.0.docx`](handbook/SAP-Migration-Pocket-Reference-v1.0.docx) | Condensed field companion for the cutover bridge: run-card, the five checklists, quick references, return codes, Oracle/HANA cards, evidence naming, escalation. |
 | **Diagrams (SVG)** | `handbook/assets/d*.svg` | The eight figures as standalone vector files — reusable in slides, runbooks and Confluence pages. |
 | **Diagrams (PNG)** | `handbook/assets/d*.png` | High-resolution raster versions (2880 px wide) — these are what the Word document embeds. |
 | **Diagrams (HTML viewers)** | `handbook/assets/d*.html` | Each figure on its own page, for review or printing individually. |
@@ -67,6 +68,10 @@ python3 -m venv .venv && .venv/bin/pip install python-docx lxml
 # 3. Render the figures to PNG for the Word build (needs matplotlib)
 .venv/bin/python training/tools/render_png.py
 
+# 3b. Word editions (full handbook + pocket reference)
+.venv/bin/python training/tools/md2docx.py
+.venv/bin/python training/tools/md2pocket.py
+
 # 4. Verify diagram geometry (no text overflowing its container or the viewBox)
 python3 training/tools/svg_qa.py "training/handbook/assets/*.svg"
 ```
@@ -96,7 +101,8 @@ training/
     ├── mplkit.py                           Matplotlib backend for the diagram primitives
     ├── render_png.py                       SVG-primitive layout → high-res PNGs
     ├── docx_diagrams.py                    Word-native fallback versions of the figures
-    └── md2docx.py                          HTML → DOCX renderer (embeds the PNGs)
+    ├── md2docx.py                          HTML → DOCX renderer (TOC field, landscape plates, PNGs)
+    └── md2pocket.py                        condensed pocket-reference DOCX builder
 ```
 
 ## Conventions

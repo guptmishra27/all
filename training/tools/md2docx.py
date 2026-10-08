@@ -15,7 +15,7 @@ import re
 import sys
 
 from docx import Document
-from docx.enum.section import WD_SECTION
+from docx.enum.section import WD_ORIENT, WD_SECTION
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml import OxmlElement
@@ -111,14 +111,13 @@ def repeat_header(row):
     trPr.append(OxmlElement("w:tblHeader"))
 
 
-def set_col_widths(table, widths_pct):
+def set_col_widths(table, widths_pct, avail=17.0):
     table.autofit = False
     tblPr = table._tbl.tblPr
     layout = OxmlElement("w:tblLayout")
     layout.set(qn("w:type"), "fixed")
     tblPr.append(layout)
     total = sum(widths_pct)
-    avail = 17.0  # cm of usable width on A4 with 2cm margins
     for row in table.rows:
         for i, cell in enumerate(row.cells):
             if i < len(widths_pct):
@@ -265,6 +264,64 @@ def new_doc():
     return doc
 
 
+
+def new_section(doc, landscape=False):
+    """Start a new page section, optionally rotated to landscape."""
+    sec = doc.add_section(WD_SECTION.NEW_PAGE)
+    if landscape:
+        sec.orientation = WD_ORIENT.LANDSCAPE
+        sec.page_width, sec.page_height = Cm(29.7), Cm(21.0)
+    else:
+        sec.orientation = WD_ORIENT.PORTRAIT
+        sec.page_width, sec.page_height = Cm(21.0), Cm(29.7)
+    sec.left_margin = sec.right_margin = Cm(2.0)
+    sec.top_margin = Cm(1.8)
+    sec.bottom_margin = Cm(1.8)
+    sec.header_distance = Cm(1.0)
+    sec.footer_distance = Cm(1.0)
+    return sec
+
+
+def is_landscape(doc):
+    return doc.sections[-1].orientation == WD_ORIENT.LANDSCAPE
+
+
+def usable_width_cm(doc):
+    sec = doc.sections[-1]
+    return (sec.page_width.cm - sec.left_margin.cm - sec.right_margin.cm)
+
+
+def enable_update_fields(doc):
+    """Ask Word to refresh TOC/PAGE fields when the document is opened."""
+    el = doc.settings.element
+    if el.find(qn("w:updateFields")) is None:
+        uf = OxmlElement("w:updateFields")
+        uf.set(qn("w:val"), "true")
+        el.append(uf)
+
+
+def add_toc_field(doc, levels="1-2"):
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(4)
+    r = p.add_run()
+    b = OxmlElement("w:fldChar"); b.set(qn("w:fldCharType"), "begin"); r._r.append(b)
+    r2 = p.add_run()
+    it = OxmlElement("w:instrText"); it.set(qn("xml:space"), "preserve")
+    it.text = r' TOC \o "%s" \h \z \u ' % levels
+    r2._r.append(it)
+    r3 = p.add_run()
+    sep = OxmlElement("w:fldChar"); sep.set(qn("w:fldCharType"), "separate"); r3._r.append(sep)
+    r4 = p.add_run("Word populates this table of contents on open (it will offer to update "
+                   "fields). If it does not, select this line and press F9.")
+    r4.italic = True
+    r4.font.size = Pt(9)
+    r4.font.color.rgb = MUTED
+    r4.font.name = BODY_FONT
+    r5 = p.add_run()
+    e = OxmlElement("w:fldChar"); e.set(qn("w:fldCharType"), "end"); r5._r.append(e)
+    return p
+
+
 def header_footer(doc, title_text):
     for sec in doc.sections:
         sec.different_first_page_header_footer = True
@@ -369,7 +426,8 @@ def emit_table(doc, headers, rows, widths=None, caption=None, fills=None,
                 cell_shade(c, fill)
     if widths:
         try:
-            set_col_widths(t, [float(str(w).replace("%", "")) for w in widths])
+            set_col_widths(t, [float(str(w).replace("%", "")) for w in widths],
+                           avail=usable_width_cm(doc))
         except (ValueError, TypeError):
             pass
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
@@ -398,10 +456,27 @@ def emit_box(doc, kind, label, blocks):
         para_border(q, edges=("left", "bottom", "right"), color=accent, size=6, space=6)
 
 
+def _br_lines(node):
+    """Extract lines from a block where line breaks are <br> elements."""
+    lines, cur = [], ""
+
+    def walk(n):
+        nonlocal cur
+        cur += n.text or ""
+        for c in n:
+            if c.tag == "br":
+                lines.append(cur)
+                cur = ""
+            else:
+                walk(c)
+            cur += c.tail or ""
+    walk(node)
+    lines.append(cur)
+    return [l.replace("\u00a0", " ").rstrip() for l in lines if l.strip()]
+
+
 def emit_cmd(doc, node):
-    lines = [plain(node)]
-    text = node.text_content().replace("\u00a0", " ")
-    lines = [l.rstrip() for l in text.split("\n") if l.strip()]
+    lines = _br_lines(node)
     for i, l in enumerate(lines):
         p = doc.add_paragraph()
         p.paragraph_format.space_before = Pt(6 if i == 0 else 0)
@@ -446,7 +521,7 @@ def emit_figure(doc, slug, caption):
         p.paragraph_format.space_after = Pt(4)
         keep_with_next(p)
         run = p.add_run()
-        run.add_picture(png, width=Cm(16.9))
+        run.add_picture(png, width=Cm(min(usable_width_cm(doc), 24.7)))
         if caption is not None:
             cp = doc.add_paragraph()
             cp.paragraph_format.space_after = Pt(12)
@@ -858,6 +933,9 @@ def emit_child(doc, el):
         cap = t.find("./caption")
         heads = [th for th in t.findall("./thead/tr/th")]
         rows = t.findall("./tbody/tr")
+        wide = len(heads) >= 6
+        if wide:
+            new_section(doc, landscape=True)
         widths = None
         cg = t.find("./colgroup")
         if cg is not None:
@@ -870,6 +948,8 @@ def emit_child(doc, el):
                    [re.sub(r"<[^>]+>", "", plain(th)) for th in heads] if heads else None,
                    data, widths=widths, caption=plain(cap) if cap is not None else None,
                    body_size=8.6)
+        if wide:
+            new_section(doc, landscape=False)
     elif tag == "div" and cls.startswith("box"):
         parts = cls.split()
         kind = parts[1] if len(parts) > 1 else ""
@@ -939,7 +1019,9 @@ def emit_child(doc, el):
     elif tag == "figure":
         slug = (el.get("id") or "").replace("fig-", "")
         cap = el.find("./figcaption")
+        new_section(doc, landscape=True)
         emit_figure(doc, slug, cap)
+        new_section(doc, landscape=False)
     elif tag == "details":
         emit_qa(doc, [el])
     elif tag == "div" and cls.startswith("ck-tools"):
@@ -956,27 +1038,12 @@ def build_toc(doc, tree):
     p = doc.paragraphs[-1]
     para_border(p, edges=("bottom",), color="1B4F86", size=12, space=5)
     secs = tree.xpath("//main//section")
-    rows = []
-    for s in secs:
-        head = _by_class(s, "sec-h")
-        num = title_txt = None
-        if head is not None:
-            nd = _by_class(head, "num")
-            num = plain(nd) if nd is not None else None
-            h2 = head.find(".//h2")
-            title_txt = plain(h2) if h2 is not None else None
-        else:
-            h2 = s.find("./h2")
-            title_txt = plain(h2) if h2 is not None else None
-        if not title_txt:
-            continue
-        n = "" if (not num or num == "—") else num
-        subs = [plain(x) for x in s.findall("./h3")]
-        rows.append([n, title_txt, "; ".join(subs)[:180]])
-    emit_table(doc, ["§", "Section", "Contents"], rows, widths=[6, 30, 64], body_size=8.6)
+    add_toc_field(doc, "1-2")
     p = doc.add_paragraph()
-    r = p.add_run("Tip: in Word, use References → Table of Contents for a live, page-numbered TOC; "
-                  "all headings in this document use Word outline levels.")
+    p.paragraph_format.space_before = Pt(6)
+    r = p.add_run("All headings carry Word outline levels, so the field above resolves to a live, "
+                  "page-numbered, hyperlinked table of contents. The figure index and the detailed "
+                  "contents live in the “Contents and figure index” section of the handbook itself.")
     r.font.size = Pt(8.4)
     r.italic = True
     r.font.color.rgb = MUTED
@@ -999,6 +1066,7 @@ def main():
     cover = tree.xpath("//header[@class='cover']")[0]
     if cover is not None:
         emit_cover(doc, cover)
+    enable_update_fields(doc)
     header_footer(doc, "SAP Migration Training Handbook · v1.0 · Internal")
     build_toc(doc, tree)
     for sec in tree.xpath("//main//section"):
