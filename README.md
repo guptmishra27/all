@@ -31,6 +31,8 @@
 | [`AI_SRE_Copilot_Dev_Pilot_Proposal_QI.pdf`](./AI_SRE_Copilot_Dev_Pilot_Proposal_QI.pdf) | **Original v1.0** — 7-page working draft (retained for traceability, unchanged) |
 | [`docs/AI_SRE_Copilot_Dev_Pilot_Proposal_QI_Enhanced.html`](./docs/AI_SRE_Copilot_Dev_Pilot_Proposal_QI_Enhanced.html) | **Enhanced v2.0 — Interactive charter** (recommended). Sticky TOC, diagrams, callouts, print-to-PDF via browser. **Open this file to review.** |
 | [`docs/AI_SRE_Copilot_Dev_Pilot_Proposal_QI_Enhanced.pdf`](./docs/AI_SRE_Copilot_Dev_Pilot_Proposal_QI_Enhanced.pdf) | **Enhanced v2.0 — Print-ready PDF** (12 pages, A4, paginated, cover + header/footer). Archive as signed record. |
+| [`docs/RUNBOOK_E2E.html`](./docs/RUNBOOK_E2E.html) | **🏃 End-to-End Runbook (NEW)** — Faithful HTML poster (13 sections) + clickable runbook (1→8 flow, T1–T8, Gates 0–6, 5 scenario playbooks). **Print poster + execute.** |
+| [`docs/RUNBOOK_E2E.md`](./docs/RUNBOOK_E2E.md) | **Runbook — Markdown** — Same content as HTML for git diff / CLI. |
 | [`docs/REVIEW_AND_ENHANCEMENTS.md`](./docs/REVIEW_AND_ENHANCEMENTS.md) | **Review & Enhancement Report** — gap analysis vs. Tier-1, before/after, reviewer guide. |
 | [`docs/generate_pdf.py`](./docs/generate_pdf.py) | Reproducible PDF generator (ReportLab). Run `python3 docs/generate_pdf.py` to rebuild. |
 
