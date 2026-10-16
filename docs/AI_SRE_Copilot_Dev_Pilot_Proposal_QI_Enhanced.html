@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI SRE Copilot — Dev Pilot Proposal | Quantum Integrators | Enhanced Tier-1 Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B1F4A;
+  --navy-2:#132C63;
+  --navy-3:#1E3A8A;
+  --teal:#0E7490;
+  --teal-light:#ECFEFF;
+  --teal-mid:#0891B2;
+  --gold:#C5A880;
+  --gold-dark:#A68B5B;
+  --slate:#475569;
+  --slate-light:#64748B;
+  --slate-50:#F8FAFC;
+  --slate-100:#F1F5F9;
+  --slate-200:#E2E8F0;
+  --border:#E2E8F0;
+  --green:#059669;
+  --amber:#D97706;
+  --red:#DC2626;
+  --page-width: 1080px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:#0F172A;
+  background:#FFFFFF;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--teal);text-decoration:none}
+a:hover{text-decoration:underline}
+/* Top bar */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  height:56px;
+  display:flex;align-items:center;
+}
+.topbar-inner{
+  max-width:var(--page-width);width:100%;margin:0 auto;
+  padding:0 24px;display:flex;justify-content:space-between;align-items:center;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{
+  width:36px;height:36px;background:var(--navy);border-radius:8px;
+  display:grid;place-items:center;color:white;font-weight:800;font-size:14px;letter-spacing:-0.5px
+}
+.brand-text{line-height:1.1}
+.brand-text strong{font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy)}
+.brand-text span{display:block;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--slate-light);font-weight:600}
+.topbar-nav{display:flex;align-items:center;gap:18px}
+.pill{
+  font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;
+  padding:6px 10px;border-radius:999px;border:1px solid;
+}
+.pill-conf{color:#B91C1C;background:#FEF2F2;border-color:#FECACA}
+.pill-doc{color:var(--navy);background:var(--slate-50);border-color:var(--border)}
+.btn{
+  appearance:none;border:0;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;
+  cursor:pointer;transition:all .15s;
+}
+.btn-primary{background:var(--navy);color:white}
+.btn-primary:hover{background:var(--navy-2);transform:translateY(-1px)}
+.btn-ghost{background:white;border:1px solid var(--border);color:var(--navy)}
+/* Cover */
+.cover{
+  background: radial-gradient(1200px 600px at 70% -10%, #1E3A8A 0%, transparent 60%),
+              linear-gradient(180deg, #0B1F4A 0%, #0F2A5E 55%, #132C63 100%);
+  color:white;position:relative;overflow:hidden;
+}
+.cover-inner{
+  max-width:var(--page-width);margin:0 auto;
+  padding:42px 24px 0 24px;
+}
+.cover-grid{
+  display:grid;grid-template-columns:1.15fr 0.85fr;gap:32px;
+  align-items:start;padding:28px 0 32px 0;
+}
+.eyebrow{
+  display:flex;align-items:center;gap:10px;margin-bottom:18px;
+  font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;color:#93C5FD;
+}
+.eyebord{width:32px;height:2px;background:var(--gold);border-radius:999px}
+.cover h1{
+  font-family:'Playfair Display',serif;
+  font-size:44px;line-height:0.95;letter-spacing:-0.03em;font-weight:700;
+  margin-bottom:12px;
+}
+.cover h1 em{font-weight:600;color:#93C5FD;font-style:italic}
+.cover-subtitle{
+  font-size:18px;line-height:1.45;color:#DBEAFE;font-weight:400;max-width:560px;margin-bottom:22px;
+}
+.cover-meta{
+  display:grid;grid-template-columns:auto 1fr;gap:8px 16px;
+  font-size:13px;margin-top:18px;
+}
+.cover-meta dt{color:#93C5FD;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;font-size:10px;padding-top:3px}
+.cover-meta dd{color:#E0E7FF;font-weight:500}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.badge{
+  font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  padding:7px 10px;border-radius:999px;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:#E0E7FF;
+  backdrop-filter:blur(8px);
+}
+.badge-gold{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.cover-card{
+  background:white;border-radius:16px;padding:18px;
+  color:#0F172A;box-shadow:0 20px 60px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.1);
+  border:1px solid rgba(255,255,255,0.6);
+}
+.cover-card-head{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);
+}
+.cover-card-head strong{font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)}
+.cover-card-head span{font-size:11px;font-weight:700;color:var(--green);background:#ECFDF5;padding:4px 8px;border-radius:999px;border:1px solid #A7F3D0}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kv-item{padding:12px;background:var(--slate-50);border-radius:10px;border:1px solid var(--border)}
+.kv-item label{display:block;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;color:var(--slate-light);margin-bottom:4px}
+.kv-item strong{font-size:18px;letter-spacing:-0.02em;color:var(--navy)}
+.kv-item span{font-size:12px;color:var(--slate)}
+.cover-card-footer{
+  margin-top:14px;padding:12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;
+  display:flex;gap:10px;align-items:start;
+}
+.cover-card-footer i{width:28px;height:28px;background:#FEF3C7;border-radius:999px;display:grid;place-items:center;font-style:normal;font-size:14px;flex-shrink:0}
+.cover-card-footer p{font-size:12px;line-height:1.5;color:#92400E}
+.cover-card-footer p strong{color:#78350F}
+/* Confidential bar */
+.conf-bar{
+  background:#FEF2F2;border-top:1px solid #FECACA;border-bottom:1px solid #FECACA;
+  padding:8px 24px;text-align:center;
+  font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;color:#991B1B;
+}
+.conf-bar span{color:#DC2626}
+/* Container */
+.container{max-width:var(--page-width);margin:0 auto;padding:0 24px}
+.layout{display:grid;grid-template-columns:220px 1fr;gap:32px;align-items:start;padding:24px 0 40px 0}
+.toc{position:sticky;top:72px}
+.toc-title{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:800;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.toc-title:before{content:"";width:18px;height:2px;background:var(--gold)}
+.toc-list{list-style:none}
+.toc-list li{margin:2px 0}
+.toc-list a{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 10px;border-radius:8px;font-size:13px;font-weight:500;color:var(--slate);
+  border:1px solid transparent;
+}
+.toc-list a:hover{background:var(--slate-50);color:var(--navy);text-decoration:none;border-color:var(--border)}
+.toc-list a.active{background:var(--navy);color:white}
+.toc-num{
+  width:22px;height:22px;border-radius:999px;
+  display:grid;place-items:center;font-size:10px;font-weight:800;
+  background:var(--slate-100);color:var(--slate-light);flex-shrink:0;
+}
+.toc-list a.active .toc-num{background:rgba(255,255,255,0.18);color:white}
+.toc-card{
+  margin-top:18px;background:var(--slate-50);border:1px solid var(--border);border-radius:12px;padding:14px;
+}
+.toc-card h4{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);margin-bottom:8px}
+.toc-card p{font-size:12px;line-height:1.5;color:var(--slate)}
+.toc-card .mini-kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.mini-kv div{background:white;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+.mini-kv strong{display:block;font-size:16px;color:var(--navy)}
+.mini-kv span{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;color:var(--slate-light)}
+/* Main */
+.main{min-width:0}
+.doc-meta{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;align-items:center;
+}
+.doc-meta span{font-size:12px}
+.version{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--slate-50);border:1px solid var(--border);padding:6px 10px;border-radius:999px;
+  font-size:12px;font-weight:600;color:var(--slate)
+}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--green);box-shadow:0 0 0 4px #ECFDF5}
+.doc-title{
+  font-size:28px;letter-spacing:-0.03em;line-height:1.15;font-weight:800;color:var(--navy);
+  margin-bottom:8px;
+}
+.doc-subtitle{font-size:15px;line-height:1.55;color:var(--slate);margin-bottom:18px;max-width:720px}
+.divider{height:1px;background:var(--border);margin:18px 0}
+/* Callouts */
+.callout{
+  border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:start;
+  border:1px solid;margin:16px 0;
+}
+.callout i{width:32px;height:32px;border-radius:999px;display:grid;place-items:center;font-style:normal;font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-blue{background:#EFF6FF;border-color:#BFDBFE}
+.callout-blue i{background:#DBEAFE}
+.callout-amber{background:#FFFBEB;border-color:#FDE68A}
+.callout-amber i{background:#FEF3C7}
+.callout-green{background:#ECFDF5;border-color:#A7F3D0}
+.callout-green i{background:#D1FAE5}
+.callout-red{background:#FEF2F2;border-color:#FECACA}
+.callout-red i{background:#FEE2E2}
+.callout h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.callout p{font-size:13px;line-height:1.6;color:#334155}
+.callout ul{margin:6px 0 0 16px;font-size:13px;color:#334155}
+/* Section */
+.section{margin:28px 0 36px 0;scroll-margin-top:80px}
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.sec-num{
+  width:36px;height:36px;border-radius:10px;background:var(--navy);color:white;
+  display:grid;place-items:center;font-weight:800;font-size:13px;flex-shrink:0;
+}
+.sec-num.teal{background:var(--teal)}
+.sec-num.gold{background:var(--gold);color:var(--navy)}
+.section-head h2{font-size:20px;letter-spacing:-0.02em;font-weight:800;color:var(--navy);line-height:1.2}
+.section-head h2 span{font-weight:400;color:var(--slate-light);font-size:14px;letter-spacing:0}
+.section-kicker{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:800;color:var(--teal);margin-bottom:2px}
+.prose{font-size:14px;line-height:1.7;color:#334155}
+.prose p{margin:8px 0}
+.prose strong{color:#0F172A}
+.prose ul{margin:8px 0 8px 18px}
+.prose li{margin:4px 0}
+.h3{font-size:15px;font-weight:800;letter-spacing:-0.01em;color:var(--navy);margin:18px 0 8px 0;display:flex;align-items:center;gap:8px}
+.h3:before{content:"";width:20px;height:3px;background:var(--gold);border-radius:999px}
+.h4{font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--slate);margin:16px 0 8px 0}
+/* Cards grid */
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:980px){
+  .cover-grid{grid-template-columns:1fr}
+  .layout{grid-template-columns:1fr}
+  .toc{display:none}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+}
+.card{
+  background:white;border:1px solid var(--border);border-radius:12px;padding:16px;
+}
+.card h4{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.card h4 i{width:26px;height:26px;border-radius:8px;background:var(--slate-50);display:grid;place-items:center;font-style:normal;font-size:14px;border:1px solid var(--border)}
+.card p{font-size:13px;line-height:1.6;color:var(--slate)}
+.card ul{margin:6px 0 0 16px;font-size:13px;color:var(--slate)}
+.stat{
+  background:white;border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;
+}
+.stat strong{display:block;font-size:22px;letter-spacing:-0.02em;color:var(--navy)}
+.stat span{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;color:var(--slate-light)}
+.stat small{display:block;font-size:11px;color:var(--slate);margin-top:4px}
+.kpi{
+  background:linear-gradient(180deg,white 0%,var(--slate-50) 100%);
+  border:1px solid var(--border);border-radius:12px;padding:16px;
+  display:flex;gap:12px;align-items:start;
+}
+.kpi i{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-style:normal;font-size:18px;flex-shrink:0}
+.kpi i.blue{background:#EFF6FF;border:1px solid #BFDBFE}
+.kpi i.teal{background:#ECFEFF;border:1px solid #A5F3FC}
+.kpi i.amber{background:#FFFBEB;border:1px solid #FDE68A}
+.kpi i.green{background:#ECFDF5;border:1px solid #A7F3D0}
+.kpi strong{font-size:14px;color:var(--navy);display:block}
+.kpi p{font-size:13px;color:var(--slate);margin-top:2px}
+/* Tables */
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px;margin:14px 0;background:white}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+thead th{
+  background:var(--navy);color:white;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-size:11px;
+  padding:10px 12px;text-align:left;white-space:nowrap;
+}
+thead th:first-child{border-radius:12px 0 0 0}
+thead th:last-child{border-radius:0 12px 0 0}
+tbody td{padding:10px 12px;border-top:1px solid var(--border);vertical-align:top;color:#334155}
+tbody tr:nth-child(even) td{background:var(--slate-50)}
+tbody tr:hover td{background:#EFF6FF}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;letter-spacing:0.04em;
+  padding:4px 8px;border-radius:999px;border:1px solid;
+}
+.tag-green{color:#065F46;background:#ECFDF5;border-color:#A7F3D0}
+.tag-amber{color:#92400E;background:#FFFBEB;border-color:#FDE68A}
+.tag-red{color:#991B1B;background:#FEF2F2;border-color:#FECACA}
+.tag-slate{color:var(--slate);background:var(--slate-50);border-color:var(--border)}
+.tag-navy{color:white;background:var(--navy);border-color:var(--navy)}
+/* Architecture */
+.arch{
+  background: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
+  border:1px solid var(--border);border-radius:16px;padding:18px;margin:16px 0;overflow:auto;
+}
+.arch-diagram{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:start;min-width:760px;
+}
+.arch-step{
+  background:white;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;
+  position:relative;
+}
+.arch-step:after{
+  content:"→";position:absolute;right:-14px;top:50%;transform:translateY(-50%);
+  width:18px;height:18px;background:var(--navy);color:white;border-radius:999px;
+  display:grid;place-items:center;font-size:11px;font-weight:800;
+}
+.arch-step:last-child:after{display:none}
+.arch-step i{width:36px;height:36px;border-radius:10px;margin:0 auto 8px auto;display:grid;place-items:center;font-style:normal;font-size:18px;border:1px solid var(--border)}
+.arch-step strong{display:block;font-size:12px;font-weight:800;color:var(--navy);line-height:1.2}
+.arch-step span{display:block;font-size:11px;color:var(--slate);margin-top:4px;line-height:1.4}
+.arch-step small{display:block;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;font-weight:700;color:var(--teal);margin-top:6px;background:var(--teal-light);padding:3px 6px;border-radius:999px;border:1px solid #A5F3FC}
+/* Timeline */
+.timeline{
+  position:relative;padding-left:22px;margin:16px 0;
+  border-left:2px solid var(--border);
+}
+.tl-item{position:relative;padding:0 0 18px 18px}
+.tl-item:before{
+  content:"";position:absolute;left:-9px;top:4px;
+  width:16px;height:16px;border-radius:999px;background:white;border:3px solid var(--navy);
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item.teal:before{border-color:var(--teal)}
+.tl-item.gold:before{border-color:var(--gold)}
+.tl-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
+.tl-head strong{font-size:13px;color:var(--navy)}
+.tl-head span{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--border);background:white;color:var(--slate)}
+.tl-item p{font-size:13px;color:var(--slate);margin:4px 0}
+.tl-item ul{margin:6px 0 0 16px;font-size:13px;color:var(--slate)}
+.gate{
+  margin-top:8px;display:flex;gap:8px;align-items:center;
+  font-size:12px;font-weight:700;color:#065F46;background:#ECFDF5;border:1px solid #A7F3D0;padding:8px 10px;border-radius:8px;
+}
+.gate i{width:20px;height:20px;background:#065F46;color:white;border-radius:999px;display:grid;place-items:center;font-style:normal;font-size:11px;flex-shrink:0}
+/* RACI */
+.raci td:first-child{font-weight:700;color:var(--navy);white-space:nowrap}
+.letter{
+  width:22px;height:22px;border-radius:999px;display:inline-grid;place-items:center;
+  font-size:11px;font-weight:800;color:white;
+}
+.l-R{background:var(--navy)}
+.l-A{background:var(--gold);color:var(--navy)}
+.l-C{background:var(--teal)}
+.l-I{background:var(--slate-light)}
+/* Budget */
+.budget-bar{
+  height:10px;border-radius:999px;overflow:hidden;display:flex;background:var(--slate-100);border:1px solid var(--border)
+}
+.budget-seg{height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--slate)}
+.legend i{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,0.08)}
+/* Risk */
+.risk{border-left:4px solid var(--border);padding-left:14px;margin:12px 0}
+.risk.high{border-color:var(--red)}
+.risk.med{border-color:var(--amber)}
+.risk.low{border-color:var(--green)}
+.risk strong{font-size:13px;color:var(--navy)}
+.risk p{font-size:13px;color:var(--slate);margin:4px 0}
+.risk-meta{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+/* Footer */
+.footer{
+  border-top:1px solid var(--border);background:var(--slate-50);padding:18px 24px;
+  font-size:11px;color:var(--slate-light);line-height:1.6;
+}
+.footer-grid{max-width:var(--page-width);margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:18px}
+@media(max-width:700px){.footer-grid{grid-template-columns:1fr}}
+/* Print */
+@media print{
+  .topbar{position:static}
+  .layout{grid-template-columns:1fr}
+  .toc{display:none}
+  .cover{break-after:page}
+}
+code{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--slate-100);padding:2px 6px;border-radius:6px;border:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">QI</div>
+      <div class="brand-text">
+        <strong>Quantum Integrators</strong>
+        <span>Internal Proposal • AI SRE Copilot</span>
+      </div>
+    </div>
+    <div class="topbar-nav">
+      <span class="pill pill-conf">● Confidential</span>
+      <span class="pill pill-doc">QI-AI-SRE-2026-001 • v2.0 Enhanced</span>
+      <button class="btn btn-ghost" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-primary" onclick="document.getElementById('decisions').scrollIntoView({behavior:'smooth'})">Decisions Requested →</button>
+    </div>
+  </div>
+</div>
+
+<div class="cover">
+  <div class="cover-inner">
+    <div class="eyebrow"><span class="eyebord"></span> Internal Development Pilot • Google Cloud • GSK Excluded</div>
+    <div class="cover-grid">
+      <div>
+        <h1>AI SRE Copilot<br><em>Dev Pilot</em></h1>
+        <p class="cover-subtitle">A controlled, evidence-linked AI diagnosis service with deterministic policy validation and mandatory human approval — built entirely in QI’s internal GCP project. No GSK data, credentials, or environments.</p>
+        <div class="badges">
+          <span class="badge badge-gold">4–6 weeks</span>
+          <span class="badge">≤ 20 Cloud Run services</span>
+          <span class="badge">USD 250 ceiling</span>
+          <span class="badge">Human-in-the-loop</span>
+          <span class="badge">Zero-trust IAM</span>
+        </div>
+        <dl class="cover-meta">
+          <dt>Environment</dt><dd>Quantum Integrators internal Google Cloud project • us-east1 / us-central1</dd>
+          <dt>Pilot coordinator</dt><dd>Gupteswar Mishra</dd>
+          <dt>Technical lead</dt><dd>Akshay Saxena</dd>
+          <dt>Sponsors / Approvers</dt><dd>Ken / Prithiviraj — Business & Budget Authority</dd>
+          <dt>Date & Version</dt><dd>16 October 2026 • v2.0 — Tier-1 Enhanced Edition (supersedes v1.0 dated 16 Oct 2026)</dd>
+          <dt>Classification</dt><dd>Confidential — QI Internal • Not for external distribution</dd>
+        </dl>
+      </div>
+      <div class="cover-card">
+        <div class="cover-card-head">
+          <strong>Decision Requested</strong>
+          <span>Conditional Approval</span>
+        </div>
+        <div class="kv">
+          <div class="kv-item">
+            <label>Ask</label>
+            <strong>Approve</strong>
+            <span>QI-only pilot subject to readiness gates</span>
+          </div>
+          <div class="kv-item">
+            <label>Budget Ceiling</label>
+            <strong>USD 250</strong>
+            <span>Pending period validation</span>
+          </div>
+          <div class="kv-item">
+            <label>Scope</label>
+            <strong>≤ 20 services</strong>
+            <span>Start with 2, scale on evidence</span>
+          </div>
+          <div class="kv-item">
+            <label>Risk Posture</label>
+            <strong>Guardrailed</strong>
+            <span>Recommend-only • Approval-bound</span>
+          </div>
+        </div>
+        <div class="cover-card-footer">
+          <i>⚑</i>
+          <p><strong>Go / No-Go Rule:</strong> Privileged remediation stays <u>disabled</u> until IAM isolation, approval-binding, and all negative bypass tests pass. This pilot does not certify production readiness and does not authorize any GSK implementation.</p>
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--slate-50);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center"><div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--slate)">Readiness Gate</div><div style="font-size:12px;font-weight:700;color:var(--navy)">Before Week-1 provisioning</div></div>
+          <div style="background:var(--navy);color:white;border-radius:8px;padding:8px;text-align:center"><div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.8">Final Gate</div><div style="font-size:12px;font-weight:700">Week 6 review & clean-up</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="height:14px;background:linear-gradient(90deg,var(--gold) 0%, #FDE68A 50%, var(--gold) 100%)"></div>
+</div>
+
+<div class="conf-bar">CONFIDENTIAL &nbsp;•&nbsp; QI INTERNAL DEVELOPMENT PILOT &nbsp;•&nbsp; <span>GSK implementation, data, and credentials explicitly excluded</span> &nbsp;•&nbsp; Separate approvals required for any GSK work</div>
+
+<div class="container">
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <ol class="toc-list">
+        <li><a href="#exec" class="active"><span class="toc-num">0</span> Executive Summary</a></li>
+        <li><a href="#s1"><span class="toc-num">1</span> Strategic Context</a></li>
+        <li><a href="#s2"><span class="toc-num">2</span> Objectives & Outcomes</a></li>
+        <li><a href="#s3"><span class="toc-num">3</span> Scope & Boundaries</a></li>
+        <li><a href="#s4"><span class="toc-num">4</span> Architecture</a></li>
+        <li><a href="#s5"><span class="toc-num">5</span> Security & IAM</a></li>
+        <li><a href="#s6"><span class="toc-num">6</span> Approval & Execution</a></li>
+        <li><a href="#s7"><span class="toc-num">7</span> Delivery Plan</a></li>
+        <li><a href="#s8"><span class="toc-num">8</span> Budget & Cost Controls</a></li>
+        <li><a href="#s9"><span class="toc-num">9</span> Success Measures</a></li>
+        <li><a href="#s10"><span class="toc-num">10</span> Risks & Mitigations</a></li>
+        <li><a href="#s11"><span class="toc-num">11</span> Governance & RACI</a></li>
+        <li><a href="#decisions"><span class="toc-num">12</span> Decisions & Next Steps</a></li>
+        <li><a href="#appendix"><span class="toc-num">A</span> Appendices</a></li>
+      </ol>
+      <div class="toc-card">
+        <h4>At a glance</h4>
+        <p>Evidence-linked diagnosis → deterministic allowlist → human approval → protected workflow execution → health check → audited outcome.</p>
+        <div class="mini-kv">
+          <div><strong>5</strong><span>Scenarios</span></div>
+          <div><strong>≥10</strong><span>Scored runs</span></div>
+          <div><strong>100%</strong><span>Approval-bound</span></div>
+          <div><strong>0</strong><span>Autonomous IAM/DB</span></div>
+        </div>
+      </div>
+      <div class="toc-card" style="background:var(--navy);color:white;border-color:var(--navy)">
+        <h4 style="color:#93C5FD">Tier-1 Enhancements in v2.0</h4>
+        <p style="color:#DBEAFE;font-size:12px">Pyramid structure, quantified value case, zero-trust guardrails, stage-gate plan with exit criteria, detailed unit-economics, RAID log, RACI, and decision gates — formatted for executive and audit review.</p>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="doc-meta">
+        <span class="version"><span class="dot"></span> Status: Ready for Approval • Last updated 16 Oct 2026</span>
+        <span class="version">Evidence: QI internal GCP only • Grafana CE • Vertex AI Gemini • GitHub Actions</span>
+      </div>
+      <h1 class="doc-title">Enhanced Proposal — Tier-1 Consulting Grade</h1>
+      <p class="doc-subtitle">This <strong>Enhanced Edition (v2.0)</strong> restructures the original 7-page working draft into a board-ready, audit-defensible pilot charter. Substance is preserved; structure, rigor, and assurance are elevated to Tier-1 consulting standards — MECE logic, explicit guardrails, stage-gated delivery, and quantified success criteria. <span style="color:var(--slate-light)">Original document retained as <code>AI_SRE_Copilot_Dev_Pilot_Proposal_QI.pdf</code> for traceability.</span></p>
+
+      <div class="grid grid-3" style="margin:16px 0">
+        <div class="kpi"><i class="blue">◈</i><div><strong>Recommend, don’t execute</strong><p>Model output is untrusted input — deterministic policy is the gate.</p></div></div>
+        <div class="kpi"><i class="teal">⬡</i><div><strong>Separate identities</strong><p>Diagnosis cannot deploy; deployment cannot see prompts.</p></div></div>
+        <div class="kpi"><i class="green">✓</i><div><strong>Approval-bound</strong><p>Every privileged change has a recorded human decision.</p></div></div>
+      </div>
+
+      <div class="callout callout-amber">
+        <i>⚠</i>
+        <div>
+          <h4>Confidentiality & Scope Boundary — Read First</h4>
+          <p>This pilot is <strong>QI-internal only</strong>. It does not authorize access to, deployment in, or use of credentials or data from GSK. Any future GSK implementation requires a separate architecture, security, access, budget, and go-live approval package.</p>
+        </div>
+      </div>
+
+      <!-- EXECUTIVE SUMMARY -->
+      <section id="exec" class="section">
+        <div class="section-head"><div class="sec-num">0</div><div><div class="section-kicker">Executive Summary — One-page decision brief</div><h2>The ask, the why, and the conditions</h2></div></div>
+
+        <div class="card" style="border-left:4px solid var(--navy)">
+          <div style="display:grid;grid-template-columns:1fr 280px;gap:18px">
+            <div>
+              <p class="prose" style="font-size:14px"><strong>Situation:</strong> SRE toil is dominated by alert triage, log correlation, and runbook lookup — slow, inconsistent, and audit-heavy. <strong>Complication:</strong> Naïve AI automation risks prompt injection, privilege creep, and unapproved changes. <strong>Question:</strong> Can we prove, in a safe QI sandbox, that an AI-assisted copilot <em>accelerates diagnosis</em> without weakening change control?</p>
+              <p class="prose"><strong>Answer (pilot thesis):</strong> Yes — <em>if</em> we enforce a hard separation: <strong>AI proposes → deterministic policy validates → human approves → protected workflow executes → health checks verify → audit records persist</strong>. The copilot never holds deployment credentials; the deployer never sees raw prompts.</p>
+            </div>
+            <div style="background:var(--slate-50);border:1px solid var(--border);border-radius:10px;padding:12px">
+              <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:800;color:var(--navy);margin-bottom:8px">Recommendation</div>
+              <div style="font-size:13px;font-weight:700;color:var(--navy);background:white;border:1px solid var(--border);border-radius:8px;padding:10px">Conditionally approve the QI dev pilot. Release privileged remediation <em>only after</em> all negative tests pass.</div>
+              <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center">
+                <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:8px"><div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;color:var(--slate)">Decision</div><div style="font-size:13px;font-weight:800;color:var(--navy)">Conditional</div></div>
+                <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:8px"><div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;color:var(--slate)">Envelope</div><div style="font-size:13px;font-weight:800;color:var(--navy)">USD 250</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-top:14px">
+          <div class="card">
+            <h4><i>◐</i> Why now</h4>
+            <ul>
+              <li>Grafana CE + Cloud Monitoring mature enough for bounded evidence</li>
+              <li>Vertex AI Gemini provides structured, citation-linked output</li>
+              <li>Workload Identity Federation enables short-lived, narrow deploy creds</li>
+              <li>Existing GitHub Actions can enforce approval binding today</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>⬢</i> What we will prove in 4–6 weeks</h4>
+            <ul>
+              <li>≥90% correct primary diagnosis across ≥10 scored runs</li>
+              <li>Zero changes outside approved workflows</li>
+              <li>100% approval coverage for privileged actions</li>
+              <li>Median alert→approved-fix time vs. manual baseline</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>◎</i> What we will NOT do</h4>
+            <ul>
+              <li>No GSK env, creds, or data — ever in this pilot</li>
+              <li>No autonomous IAM / DB / quota / failover changes</li>
+              <li>No execution of arbitrary model-generated commands</li>
+              <li>No claim of production certification</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-blue">
+          <i>ℹ</i>
+          <div>
+            <h4>Value hypothesis (to be measured, not assumed)</h4>
+            <p>Industry SRE studies show 30–50% of MTTR is spent on correlation & runbook lookup. If the copilot cuts that slice by half, a 20–25% MTTR reduction is plausible on in-scope incidents — <em>without</em> increasing change risk, because every privileged action remains human-approved and audit-recorded. The pilot will quantify this against a manual baseline agreed at kickoff.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Condition</th><th>Gate & Evidence</th><th>Owner</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Written scope & budget approval</strong></td><td>Signed decision log confirming USD 250 period (full pilot vs. monthly) + contingency use rule</td><td><span class="tag tag-navy">Ken / Prithiviraj</span></td></tr>
+              <tr><td><strong>Named owners & approvers</strong></td><td>RACI confirmed; at least 2 authorized approvers in GitHub protected environment</td><td><span class="tag tag-slate">Gupteswar</span></td></tr>
+              <tr><td><strong>Access readiness</strong></td><td>GCP project, billing, IAM, GitHub plan/branch protection & WIF trust validated</td><td><span class="tag tag-slate">Cloud Platform</span></td></tr>
+              <tr><td><strong>Approval controls verified</strong></td><td>All bypass tests pass (see §6); remediation stays disabled until then</td><td><span class="tag tag-slate">CI/CD + Security</span></td></tr>
+              <tr><td><strong>Security review</strong></td><td>Data-handling, redaction, log-as-untrusted-input, and audit retention reviewed</td><td><span class="tag tag-slate">Security Reviewer</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- S1 -->
+      <section id="s1" class="section">
+        <div class="section-head"><div class="sec-num">1</div><div><div class="section-kicker">Strategic Context</div><h2>Situation & Imperative <span>— Why this pilot, why now</span></h2></div></div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h4><i>◈</i> Market & technology tailwinds</h4>
+            <p>Observability (Cloud Monitoring + Grafana) and LLMs (Vertex AI Gemini) have converged to make <em>evidence-linked diagnosis</em> feasible. Workload Identity Federation removes the need for long-lived keys. Together they allow a <strong>recommendation-first</strong> copilot that is both useful and controllable — a materially better trade-off than 12 months ago.</p>
+          </div>
+          <div class="card">
+            <h4><i>⬢</i> QI-specific opportunity</h4>
+            <p>QI runs lean, multi-region Cloud Run estates. SRE load is bursty. A copilot that correlates alerts, pulls bounded evidence, and surfaces runbook-backed next steps — <strong>inside QI’s own project</strong> — builds reusable IP before any client conversation. This pilot is an <strong>internal capability bet</strong>, not a client delivery commitment.</p>
+          </div>
+        </div>
+        <div class="h3">Guiding Principles — Non-negotiables</div>
+        <div class="grid grid-3">
+          <div class="kpi"><i class="blue">1</i><div><strong>Human-in-command</strong><p>AI recommends; humans decide; workflows execute.</p></div></div>
+          <div class="kpi"><i class="teal">2</i><div><strong>Least privilege by design</strong><p>No identity holds more access than its single job requires.</p></div></div>
+          <div class="kpi"><i class="amber">3</i><div><strong>Untrusted model output</strong><p>Every proposal is schema-validated and allowlist-checked.</p></div></div>
+          <div class="kpi"><i class="green">4</i><div><strong>Auditability first</strong><p>If it isn’t recorded, it didn’t happen — evidence → decision → outcome.</p></div></div>
+          <div class="kpi"><i class="blue">5</i><div><strong>Fail safe, fail closed</strong><p>Approval unavailable → remediation disabled. No silent fallback.</p></div></div>
+          <div class="kpi"><i class="teal">6</i><div><strong>Progressive exposure</strong><p>2 services → measure → then scale to ≤20.</p></div></div>
+        </div>
+      </section>
+
+      <!-- S2 -->
+      <section id="s2" class="section">
+        <div class="section-head"><div class="sec-num teal">2</div><div><div class="section-kicker">Vision, Objectives & Outcomes</div><h2>What success looks like</h2></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Objective (Outcome)</th><th>Key Result (Measurable)</th><th>Evidence</th></tr></thead>
+            <tbody>
+              <tr><td><strong>O1</strong></td><td>Detect representative incidents early</td><td>Grafana alerts + SLOs firing on all 5 scenarios within SLO window</td><td>Dashboard + alert history</td></tr>
+              <tr><td><strong>O2</strong></td><td>Correlate & collect bounded evidence</td><td>Per incident: alert graph, log slice, deploy metadata & runbook link</td><td>Incident evidence bundle</td></tr>
+              <tr><td><strong>O3</strong></td><td>Generate evidence-linked diagnosis</td><td>≥90% correct primary diagnosis across ≥10 scored runs (see §9)</td><td>Scored test log</td></tr>
+              <tr><td><strong>O4</strong></td><td>Route via approved CI/CD only</td><td>Zero infra changes outside protected GitHub workflows</td><td>Workflow audit trail</td></tr>
+              <tr><td><strong>O5</strong></td><td>Enforce human approval</td><td>100% of privileged remediations have pre-execution approval</td><td>Approval record</td></tr>
+              <tr><td><strong>O6</strong></td><td>Prove auditability & time value</td><td>Full trace (evidence→recommendation→decision→outcome) + median alert-to-fix vs. baseline</td><td>Audit log + timing report</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout-green">
+          <i>✓</i>
+          <div>
+            <h4>Definition of Done for the pilot</h4>
+            <p>A pilot is <strong>done</strong> when all five scenarios have been exercised, at least ten runs are scored and traceable, all approval-bypass negative tests pass, spend is reconciled, and a <strong>Proceed / Extend with Conditions / Stop</strong> recommendation is presented at the Week-6 review. Demo is live, not slideware.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- S3 -->
+      <section id="s3" class="section">
+        <div class="section-head"><div class="sec-num gold">3</div><div><div class="section-kicker">Scope & Boundaries</div><h2>In scope, out of scope, and stage gates</h2></div></div>
+        <div class="grid grid-2">
+          <div class="card" style="border-left:3px solid var(--green)">
+            <h4><i>✓</i> In Scope</h4>
+            <ul>
+              <li>Up to 10–20 lightweight Cloud Run services across <code>us-east1</code> & <code>us-central1</code> (start with 2, scale on cost signal)</li>
+              <li>Grafana Community Edition dashboards, alerts & representative SLOs</li>
+              <li>Authenticated incident intake, deduplication & correlation</li>
+              <li>Bounded AI diagnosis with Vertex AI Gemini + approved runbooks (synthetic / QI-approved data only)</li>
+              <li>Predefined CI/CD allowlist actions with mandatory approval & health checks</li>
+              <li><strong>Five controlled fault scenarios:</strong> bad deployment, crash loop / startup failure, quota exhaustion, disabled API, configuration drift</li>
+              <li>≥10 scored runs + negative tests (approval rejection, duplicate delivery, invalid model output, workflow failure)</li>
+            </ul>
+          </div>
+          <div class="card" style="border-left:3px solid var(--red)">
+            <h4><i>✕</i> Out of Scope — Explicitly Excluded</h4>
+            <ul>
+              <li>Any GSK environment access, credential use, data processing, or deployment</li>
+              <li>Autonomous infra changes or direct execution of arbitrary AI-generated commands</li>
+              <li>Automated IAM changes, database operations, regional failover, quota increases</li>
+              <li>Production rollout, production-readiness certification, or implied GSK authorization</li>
+              <li>New paid GitHub / SaaS subscriptions unless separately approved</li>
+              <li>Broad Data Access audit logging before cost validation</li>
+            </ul>
+            <div class="callout callout-red" style="margin:12px 0 0 0;padding:10px"><i>!</i><div><p style="font-size:12px"><strong>Boundary enforcement:</strong> IAM denies + network controls + human review ensure no GSK touch. Violation = immediate pilot pause.</p></div></div>
+          </div>
+        </div>
+        <div class="h4">Allow-listed Actions Only (pilot)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0">
+          <span class="tag tag-green">✓ Rollback to previous revision</span>
+          <span class="tag tag-green">✓ Redeploy approved revision</span>
+          <span class="tag tag-green">✓ Restart / scale within bounds</span>
+          <span class="tag tag-green">✓ Toggle feature flag (pre-approved)</span>
+          <span class="tag tag-red">✕ IAM changes</span>
+          <span class="tag tag-red">✕ DB writes / migrations</span>
+          <span class="tag tag-red">✕ Quota increase</span>
+          <span class="tag tag-red">✕ Regional failover</span>
+          <span class="tag tag-red">✕ Arbitrary shell/commands</span>
+        </div>
+      </section>
+
+      <!-- S4 -->
+      <section id="s4" class="section">
+        <div class="section-head"><div class="sec-num">4</div><div><div class="section-kicker">Target Architecture</div><h2>Evidence-linked, policy-gated, workflow-executed</h2></div></div>
+        <p class="prose"><strong>Design axiom:</strong> <em>AI proposes; deterministic policy validates; authorized human approves; protected workflow executes; automated checks and audit records verify the outcome.</em> No step can be bypassed; each has a distinct identity and minimal scope.</p>
+
+        <div class="arch">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <strong style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy)">End-to-End Flow — QI Internal GCP Only</strong>
+            <span style="font-size:11px;font-weight:700;color:var(--teal);background:var(--teal-light);padding:4px 8px;border-radius:999px;border:1px solid #A5F3FC">QI boundary • No GSK</span>
+          </div>
+          <div class="arch-diagram">
+            <div class="arch-step"><i style="background:#EFF6FF">◉</i><strong>Telemetry</strong><span>Cloud Monitoring, Logging, Audit Logs, Grafana CE</span><small>Read-only • Approved sources</small></div>
+            <div class="arch-step"><i style="background:#FEF3C7">⬡</i><strong>Incident Intake</strong><span>Authenticate, validate, dedupe & correlate</span><small>No privileged perms</small></div>
+            <div class="arch-step"><i style="background:#ECFEFF">✦</i><strong>AI Diagnosis</strong><span>Vertex AI Gemini + runbooks + bounded evidence</span><small>Read-only identity</small></div>
+            <div class="arch-step"><i style="background:#F1F5F9">⬢</i><strong>Policy Validation</strong><span>Schema, allowlist, scope, idempotency</span><small>Reject unknown actions</small></div>
+            <div class="arch-step"><i style="background:#FEF2F2">✓</i><strong>Human Approval</strong><span>Protected env • Required reviewers • Bound to exact proposal</span><small>Re-approval on change</small></div>
+            <div class="arch-step"><i style="background:#ECFDF5">▶</i><strong>Execution</strong><span>Predefined GitHub Actions workflow</span><small>Short-lived creds • Narrow scope</small></div>
+            <div class="arch-step"><i style="background:#F5F3FF">▭</i><strong>Validation & Audit</strong><span>Health checks + evidence→outcome ledger</span><small>Traceable • Retention-bound</small></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--slate)">
+            <span style="display:inline-flex;align-items:center;gap:6px"><i style="width:10px;height:10px;background:var(--navy);border-radius:2px;display:inline-block"></i> Trust boundary</span>
+            <span>•</span><span>Telemetry treated as untrusted input — prompt injection defenses enforced before model call</span>
+            <span>•</span><span>Privileged creds never available to AI job; only to protected execution job post-approval</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Layer</th><th>Responsibilities</th><th>Security Boundary</th><th>Failure Mode → Behavior</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Telemetry</strong></td><td>Metrics, logs, audit logs, Grafana dashboards & SLOs</td><td>Read-only; approved sources only</td><td>Source down → alert on intake health</td></tr>
+              <tr><td><strong>Incident Intake</strong></td><td>Authn, payload validation, dedupe, correlation</td><td>No privileged execution perms</td><td>Invalid payload → reject, no incident</td></tr>
+              <tr><td><strong>AI Diagnosis</strong></td><td>Bounded evidence + runbooks → Vertex AI → structured proposal</td><td>Read-only identity; no infra write</td><td>Malformed output → schema reject, safe fallback</td></tr>
+              <tr><td><strong>Policy Validation</strong></td><td>Allowlist, param bounds, scope, idempotency</td><td>Model output = untrusted input</td><td>Unknown action → reject, require human</td></tr>
+              <tr><td><strong>Approval</strong></td><td>Present exact proposal to authorized reviewers</td><td>Bound to incident+proposal hash</td><td>Stale/changed proposal → approval invalidated</td></tr>
+              <tr><td><strong>Execution</strong></td><td>Invoke predefined protected workflow</td><td>Short-lived, narrow IAM</td><td>Duplicate dispatch → idempotency blocks</td></tr>
+              <tr><td><strong>Validation & Audit</strong></td><td>Health checks; full ledger (evidence→outcome)</td><td>Immutable record; retention-limited</td><td>Health inconclusive → escalate, no auto-rollback</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <h4><i>▭</i> Technology Stack (pilot)</h4>
+            <ul>
+              <li><strong>Compute:</strong> Cloud Run (lightweight services, scale-to-zero)</li>
+              <li><strong>Observability:</strong> Cloud Monitoring, Cloud Logging, Audit Logs, Grafana CE (self-hosted, authenticated)</li>
+              <li><strong>AI:</strong> Vertex AI — Gemini (structured output, token-bounded, runbook-augmented)</li>
+              <li><strong>CI/CD:</strong> GitHub Actions + Protected Environments + Required Reviewers</li>
+              <li><strong>Identity:</strong> Workload Identity Federation (short-lived), Artifact Registry, Secret Manager</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>⬢</i> Data & Evidence Bounds</h4>
+            <ul>
+              <li>Per-incident token & log-volume budgets; strict truncation & redaction</li>
+              <li>Secrets / PII redacted <em>before</em> model invocation</li>
+              <li>Only synthetic or explicitly approved QI data — no production PII</li>
+              <li>Logs & runbooks treated as untrusted — prompt-injection hardened (no tool calls from prompt)</li>
+              <li>Request limits, timeouts, schema validation, safe fallback on malformed AI response</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- S5 -->
+      <section id="s5" class="section">
+        <div class="section-head"><div class="sec-num teal">5</div><div><div class="section-kicker">Security, IAM & Responsible AI</div><h2>Zero-trust, least-privilege, audit-first</h2></div></div>
+
+        <div class="callout callout-blue">
+          <i>⬢</i>
+          <div>
+            <h4>Security thesis</h4>
+            <p>Usefulness without trust expansion. The AI is the <em>least privileged</em> actor in the system. Privilege is concentrated in a single, audited, approval-gated workflow — and is unavailable everywhere else.</p>
+          </div>
+        </div>
+
+        <div class="h3">Identity Separation — Minimum Necessary Access</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Identity</th><th>Can Do (Allow)</th><th>Cannot Do (Deny) — Enforced by IAM</th><th>Test</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Telemetry Collector</strong></td><td>Read approved metrics, logs, service metadata</td><td>No deployment, no IAM writes, no secret access</td><td>Negative IAM probe</td></tr>
+              <tr><td><strong>AI Diagnosis Service</strong></td><td>Invoke Vertex AI; read selected evidence & runbooks</td><td>No infra modification, no workflow execution, no secret material</td><td>Negative IAM probe</td></tr>
+              <tr><td><strong>Incident Intake</strong></td><td>Authenticate, validate, record incident events</td><td>No privileged GCP access</td><td>Authn bypass test</td></tr>
+              <tr><td><strong>Workflow Dispatcher</strong></td><td>Invoke <em>only</em> the approved workflow via WIF</td><td>No broad admin roles; no direct resource mutation</td><td>Scope test</td></tr>
+              <tr><td><strong>Remediation Executor</strong></td><td>Approved action on designated QI resources only</td><td>No Owner/Editor; no GSK access; no cross-project</td><td>Negative IAM + scope test</td></tr>
+              <tr><td><strong>Human Approver</strong></td><td>Approve/reject via protected environment</td><td>No implicit authority from model output; no self-approval if so-configured</td><td>Approval bypass test</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="h3">Mandatory Security Controls — Checklist (preflight)</div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h4><i>⬡</i> Identity & Access</h4>
+            <ul>
+              <li>Workload Identity Federation with short-lived credentials; <strong>no long-lived SA keys</strong></li>
+              <li>Federation trust restricted to QI GitHub org / repo / protected branch / environment / workflow</li>
+              <li>Narrow roles + SA impersonation only where required; avoid project-level broad grants</li>
+              <li>Privileged creds only in protected execution job, <em>post-approval</em></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>◈</i> Data & AI Safety</h4>
+            <ul>
+              <li>Redact secrets / sensitive payloads <em>before</em> model call; synthetic / QI-approved data only</li>
+              <li>Treat logs, incident descriptions & runbooks as <strong>untrusted input</strong></li>
+              <li>No prompt content can alter policy or invoke tools directly</li>
+              <li>Token budgets, timeouts, schema validation, safe failure on malformed output</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>◎</i> Platform Hardening</h4>
+            <ul>
+              <li>Grafana + intake: authn/authz, restricted network, rate limits</li>
+              <li>Audit logging enabled (cost-assessed); retention limits enforced</li>
+              <li>Artifact & secret storage access scoped to executor identity only</li>
+              <li>Branch protection + environment protection on GitHub</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>₵</i> Cost & Abuse Controls</h4>
+            <ul>
+              <li>Request limits, concurrency caps, token budgets</li>
+              <li>Budget alerts at 50/75/90/100% — alerts are <em>notify</em>, not hard caps; operational stop procedure tested</li>
+              <li>Daily spend review during fault-testing windows</li>
+              <li>Idempotency + deduplication to prevent runaway remediation</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-amber">
+          <i>⚠</i>
+          <div>
+            <h4>Responsible AI guardrails</h4>
+            <p>Every recommendation must include: <strong>evidence citations, confidence, risk, validation result, and rollback plan</strong>. Low-confidence or uncited proposals are auto-rejected by policy. Human reviewers are shown the <em>exact</em> bounded evidence the model saw — no hidden context.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- S6 -->
+      <section id="s6" class="section">
+        <div class="section-head"><div class="sec-num gold">6</div><div><div class="section-kicker">Human Approval & Privileged Execution</div><h2>Approval-bound by design, tested by adversarial cases</h2></div></div>
+
+        <div class="arch" style="padding:16px">
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;min-width:720px">
+            <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;font-weight:800;color:var(--navy)">1 • Propose</div><div style="font-size:11px;color:var(--slate);margin-top:4px">Create proposal: incident ID, target, action, revision, evidence, risk & rollback</div></div>
+            <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;font-weight:800;color:var(--navy)">2 • Validate</div><div style="font-size:11px;color:var(--slate);margin-top:4px">Deterministic allowlist: schema, scope, params, idempotency</div></div>
+            <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;font-weight:800;color:var(--navy)">3 • Protect</div><div style="font-size:11px;color:var(--slate);margin-top:4px">Protected env: required reviewers + branch restrictions</div></div>
+            <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;font-weight:800;color:var(--navy)">4 • Bind</div><div style="font-size:11px;color:var(--slate);margin-top:4px">Approval bound to exact proposal hash; change → re-approval</div></div>
+            <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;font-weight:800;color:var(--navy)">5 • Isolate</div><div style="font-size:11px;color:var(--slate);margin-top:4px">Privileged creds only to protected job; block alt paths</div></div>
+            <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;font-weight:800;color:var(--navy)">6 • Dedupe</div><div style="font-size:11px;color:var(--slate);margin-top:4px">Idempotency keys + concurrency controls</div></div>
+            <div style="background:white;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;font-weight:800;color:var(--navy)">7 • Verify</div><div style="font-size:11px;color:var(--slate);margin-top:4px">Health checks; record outcome; escalate on failure</div></div>
+          </div>
+        </div>
+
+        <div class="h3">Approval Bypass — Adversarial Test Matrix (must all pass before remediation is enabled)</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Adversarial Test</th><th>Expected Result</th><th>Evidence</th><th>Gate</th></tr></thead>
+            <tbody>
+              <tr><td>No approval / rejected approval → dispatch attempted</td><td><span class="tag tag-red">No infra change</span></td><td>Workflow logs + resource state</td><td><span class="tag tag-slate">Blocking</span></td></tr>
+              <tr><td>Expired / cancelled approval → replay</td><td><span class="tag tag-red">No infra change</span></td><td>Approval validity check</td><td><span class="tag tag-slate">Blocking</span></td></tr>
+              <tr><td>Proposal mutated post-approval (param/target drift)</td><td><span class="tag tag-amber">Approval invalidated — re-approval required</span></td><td>Hash comparison</td><td><span class="tag tag-slate">Blocking</span></td></tr>
+              <tr><td>Duplicate incident / repeated dispatch</td><td><span class="tag tag-amber">No duplicate remediation</span></td><td>Idempotency key + concurrency log</td><td><span class="tag tag-slate">Blocking</span></td></tr>
+              <tr><td>Unauthorized branch / actor → invoke</td><td><span class="tag tag-red">Cannot obtain privileged creds</span></td><td>WIF trust + branch protection</td><td><span class="tag tag-slate">Blocking</span></td></tr>
+              <tr><td>Workflow rerun with stale approval</td><td><span class="tag tag-amber">Fresh validity checks required</span></td><td>Rerun audit</td><td><span class="tag tag-slate">Blocking</span></td></tr>
+              <tr><td>Approval controls unavailable (GitHub env down)</td><td><span class="tag tag-red">Privileged remediation remains disabled</span></td><td>Fail-closed log</td><td><span class="tag tag-slate">Blocking</span></td></tr>
+              <tr><td>Model proposes allowlist-violating action</td><td><span class="tag tag-red">Rejected by policy — no approval surface</span></td><td>Policy validation log</td><td><span class="tag tag-slate">Blocking</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-red">
+          <i>⛔</i>
+          <div>
+            <h4>Go / No-Go Rule — Non-negotiable</h4>
+            <p>Privileged remediation remains <strong>disabled</strong> until every applicable bypass test demonstrates enforcement. The pilot coordinator + security reviewer must jointly sign the gate. No exceptions, no “temporarily allow”.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <h4><i>◈</i> Rollback discipline</h4>
+            <p>Post-action health checks run automatically. <strong>Failed or inconclusive recovery is escalated</strong>; rollback follows a <em>separately authorized</em> path — never an auto-rollback triggered by model output. Rollback proposals are themselves subject to approval binding.</p>
+          </div>
+          <div class="card">
+            <h4><i>◎</i> GitHub protections (to be confirmed at readiness gate)</h4>
+            <p>Protected environment with <strong>required reviewers</strong>, branch restrictions, and environment-scoped secrets. Verify QI repo plan supports required protections; if not, document limitation and alternate compensating control before Week-1.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- S7 -->
+      <section id="s7" class="section">
+        <div class="section-head"><div class="sec-num">7</div><div><div class="section-kicker">Delivery Plan & Milestones</div><h2>Stage-gated, 4–6 weeks, exit criteria at every gate</h2></div></div>
+
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-head"><strong>Phase 0 — Approval & Readiness</strong><span>Before Week 1 • Gate 0</span></div>
+            <p>Confirm scope, budget period, named owners, access, GitHub plan, approvers, and data-handling. Complete preflight IAM + quota + WIF checks. <strong>No provisioning before Gate 0.</strong></p>
+            <ul><li>Decision log signed • RACI confirmed • Security review scheduled</li><li>Preflight: GCP project, billing, IAM, quotas, WIF, branch protection validated</li></ul>
+            <div class="gate"><i>✓</i> Exit Gate 0: All readiness checks green; otherwise timeline does not start.</div>
+          </div>
+          <div class="tl-item teal">
+            <div class="tl-head"><strong>Phase 1 — Foundation & Security</strong><span>Week 1</span></div>
+            <p>Configure billing, APIs, IAM, federation, audit, budget alerts, and <strong>two representative Cloud Run services</strong>. Prove AI identity is non-privileged via negative IAM tests.</p>
+            <ul><li>Budget alerts at 50/75/90/100% live • Audit logging cost-assessed</li><li>Negative IAM test evidence: AI identity cannot deploy or assume executor role</li></ul>
+            <div class="gate"><i>✓</i> Exit Gate 1: IAM isolation demonstrated; cost alerts firing in test.</div>
+          </div>
+          <div class="tl-item gold">
+            <div class="tl-head"><strong>Phase 2 — Monitoring & Intake</strong><span>Week 2</span></div>
+            <p>Deploy restricted Grafana CE, dashboards, SLOs, authenticated alert delivery, deduplication, and incident evidence schema.</p>
+            <ul><li>Grafana authn/authz + network restriction + rate limits</li><li>Evidence schema: alert snapshot + log slice + deploy metadata + runbook ref</li></ul>
+            <div class="gate"><i>✓</i> Exit Gate 2: Alert → incident → evidence bundle traceable end-to-end.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-head"><strong>Phase 3 — AI Diagnosis</strong><span>Week 3</span></div>
+            <p>Integrate Vertex AI Gemini with bounded evidence, approved runbooks, schema validation, redaction, action allowlist, and safe failure handling.</p>
+            <ul><li>Structured output: diagnosis, citations, confidence, risk, rollback plan</li><li>Invalid / low-confidence output → policy reject, not silent proceed</li></ul>
+            <div class="gate"><i>✓</i> Exit Gate 3: ≥5 dry-run diagnoses scored; policy correctly rejects allowlist violations.</div>
+          </div>
+          <div class="tl-item teal">
+            <div class="tl-head"><strong>Phase 4 — CI/CD & Approval</strong><span>Week 4</span></div>
+            <p>Integrate protected GitHub workflows, approval binding, expiry/rejection paths, idempotency, post-action health checks, and audit trail.</p>
+            <ul><li>Approval bound to proposal hash; mutation → re-approval</li><li>Privileged creds only in protected job; bypass tests executed</li></ul>
+            <div class="gate"><i>✓</i> Exit Gate 4: All 8 bypass tests pass; remediation enabled only now.</div>
+          </div>
+          <div class="tl-item gold">
+            <div class="tl-head"><strong>Phase 5 — Scenario Evaluation</strong><span>Week 5</span></div>
+            <p>Run five fault scenarios and <strong>at least 10 scored runs</strong>; test negative paths, approval bypass, duplicate delivery, invalid model output, and service/workflow failures. Label live vs. simulated evidence.</p>
+            <ul><li>5 scenarios: bad deploy, crash loop, quota exhaustion, disabled API, config drift</li><li>Every run links evidence → recommendation → decision → execution → outcome</li></ul>
+            <div class="gate"><i>✓</i> Exit Gate 5: Scorecard complete; §9 acceptance criteria assessed.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-head"><strong>Phase 6 — Review & Clean-up</strong><span>Week 6 or earlier</span></div>
+            <p>Review results, spend, limitations, and risks. Live demo. Remove test resources and revoke temporary access unless retention is formally approved. Present <strong>Proceed / Extend with Conditions / Stop</strong> recommendation.</p>
+            <ul><li>Spend reconciliation • Limitations register • Risk burn-down</li><li>Clean-up attestation or retention justification signed</li></ul>
+            <div class="gate"><i>✓</i> Exit Gate 6: Final review signed; clean-up verified; GSK-separation attestation filed.</div>
+          </div>
+        </div>
+
+        <div class="callout callout-blue">
+          <i>ℹ</i>
+          <div>
+            <h4>Schedule discipline</h4>
+            <p>Timeline starts <em>only after</em> Gate 0. If Gate 0 is not green, Week-1 does not start. Each phase has a single exit gate; a red gate stops downstream work. Daily stand-ups during fault-testing; weekly steering with sponsors.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- S8 -->
+      <section id="s8" class="section">
+        <div class="section-head"><div class="sec-num teal">8</div><div><div class="section-kicker">Financial Model & Budget</div><h2>USD 250 ceiling — unit economics, not just a total</h2></div></div>
+
+        <div class="callout callout-amber">
+          <i>⚠</i>
+          <div>
+            <h4>Budget period — Decision required before spend</h4>
+            <p>The table below is a <strong>planning estimate, not a validated quotation</strong>. Approval is <em>conditional</em> on confirming whether <strong>USD 250 covers the entire 4–6 week pilot or a single monthly period</strong>. Engineering effort is excluded; no new paid GitHub/software subscription is included; taxes, FX, and data-transfer must be checked.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cost Category</th><th>Allocation</th><th>Share</th><th>Key Drivers & Validation Needed</th><th>Owner</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Cloud Run — services & copilot runtime</strong></td><td>USD 45</td><td>18%</td><td>Service count (2→20), requests, vCPU/memory, scale-to-zero, regions (2)</td><td>Platform</td></tr>
+              <tr><td><strong>Grafana hosting & storage</strong></td><td>USD 40</td><td>16%</td><td>Host size, uptime, disk, retention; CE license is free but hosting is not</td><td>Platform</td></tr>
+              <tr><td><strong>Vertex AI — Gemini usage</strong></td><td>USD 55</td><td>22%</td><td>Model, region, token volume (input+output), retries, runbook augmentation</td><td>Tech Lead</td></tr>
+              <tr><td><strong>Logging, monitoring & audit storage</strong></td><td>USD 30</td><td>12%</td><td>Log volume, audit categories enabled, retention; Data Access logs costed separately</td><td>Platform</td></tr>
+              <tr><td><strong>Artifact storage, secrets & networking</strong></td><td>USD 20</td><td>8%</td><td>Container registry, Secret Manager, egress; keep synthetic data small</td><td>Platform</td></tr>
+              <tr><td><strong>Contingency (coordinator-gated)</strong></td><td>USD 60</td><td>24%</td><td>Reserved for variance; use requires pilot coordinator review & log entry</td><td>Gupteswar</td></tr>
+              <tr style="background:#EFF6FF;font-weight:800"><td><strong>TOTAL CEILING</strong></td><td><strong>USD 250</strong></td><td><strong>100%</strong></td><td colspan="2">Subject to confirmation & pricing validation before Gate 0</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="budget-bar" aria-hidden="true">
+          <div class="budget-seg" style="width:18%;background:#0B1F4A"></div>
+          <div class="budget-seg" style="width:16%;background:#1E3A8A"></div>
+          <div class="budget-seg" style="width:22%;background:#0E7490"></div>
+          <div class="budget-seg" style="width:12%;background:#475569"></div>
+          <div class="budget-seg" style="width:8%;background:#94A3B8"></div>
+          <div class="budget-seg" style="width:24%;background:#C5A880"></div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#0B1F4A"></i> Cloud Run 18%</span>
+          <span><i style="background:#1E3A8A"></i> Grafana 16%</span>
+          <span><i style="background:#0E7490"></i> Vertex AI 22%</span>
+          <span><i style="background:#475569"></i> Logs/Monitoring 12%</span>
+          <span><i style="background:#94A3B8"></i> Artifacts/Net 8%</span>
+          <span><i style="background:#C5A880"></i> Contingency 24%</span>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="card">
+            <h4><i>₵</i> Spend controls</h4>
+            <ul>
+              <li>Start with 2 services; expand only after measuring unit cost</li>
+              <li>Daily spend review during fault testing; pause nonessential at 90%</li>
+              <li>Budget alerts at 50/75/90/100% are <em>notify</em> — test operational stop procedure separately (alerts do not enforce a hard cap)</li>
+              <li>Contingency draw requires coordinator entry + reason</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>◈</i> What’s excluded</h4>
+            <ul>
+              <li>Engineering effort (QI staff time)</li>
+              <li>New paid GitHub / SaaS subscriptions</li>
+              <li>Taxes, currency conversion, material data-transfer</li>
+              <li>Broad Data Access audit logging (validate cost before enabling)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>⬢</i> Sensitivity — What moves the needle</h4>
+            <ul>
+              <li><strong>Vertex AI tokens:</strong> ±40% swing if evidence bounds loosen</li>
+              <li><strong>Grafana uptime:</strong> 24/7 vs. test-window-only = ~2×</li>
+              <li><strong>Log retention:</strong> 7d vs. 30d = +30–50% on logging line</li>
+              <li><strong>Service count:</strong> 20 services ≠ 10× cost if scale-to-zero holds — but verify</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- S9 -->
+      <section id="s9" class="section">
+        <div class="section-head"><div class="sec-num gold">9</div><div><div class="section-kicker">Success Measures & Acceptance</div><h2>From diagnostic accuracy to time-to-fix — all audited</h2></div></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Measure</th><th>Acceptance Criterion (pilot)</th><th>How Measured</th><th>Threshold Type</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Diagnostic accuracy</strong></td><td>≥90% correct primary diagnosis across ≥10 scored runs</td><td>Independent scoring against ground truth; live vs. simulated labelled</td><td><span class="tag tag-green">Go/No-Go</span></td></tr>
+              <tr><td><strong>Scenario coverage</strong></td><td>All 5 scenarios exercised</td><td>Evidence bundle per scenario</td><td><span class="tag tag-green">Go/No-Go</span></td></tr>
+              <tr><td><strong>Pipeline enforcement</strong></td><td>Zero infra changes outside approved GitHub workflows</td><td>Workflow audit vs. resource change log</td><td><span class="tag tag-red">Zero-tolerance</span></td></tr>
+              <tr><td><strong>Human approval</strong></td><td>100% of privileged remediations have pre-execution approval</td><td>Approval record → execution correlation</td><td><span class="tag tag-red">Zero-tolerance</span></td></tr>
+              <tr><td><strong>Restricted actions</strong></td><td>Zero automated IAM / DB / failover / quota actions</td><td>Policy log + IAM change audit</td><td><span class="tag tag-red">Zero-tolerance</span></td></tr>
+              <tr><td><strong>Auditability</strong></td><td>Every run links evidence → recommendation → decision → outcome</td><td>Trace completeness check</td><td><span class="tag tag-green">Go/No-Go</span></td></tr>
+              <tr><td><strong>Duplicate protection</strong></td><td>Repeated delivery of same incident → no duplicate remediation</td><td>Idempotency test</td><td><span class="tag tag-green">Go/No-Go</span></td></tr>
+              <tr><td><strong>Time improvement</strong></td><td>Median alert→approved-fix vs. manual baseline; target agreed at kickoff</td><td>Timed runs; manual baseline captured Week 1</td><td><span class="tag tag-amber">Directional</span></td></tr>
+              <tr><td><strong>Budget</strong></td><td>Spend within confirmed approved envelope</td><td>Daily cost report + reconciliation</td><td><span class="tag tag-amber">Envelope</span></td></tr>
+              <tr><td><strong>Isolation</strong></td><td>No GSK resources, creds, or data used</td><td>IAM + project scope attestation</td><td><span class="tag tag-red">Zero-tolerance</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-amber">
+          <i>⚠</i>
+          <div>
+            <h4>Measurement caveat — Read with rigor</h4>
+            <p>Ten runs provide an <strong>initial pilot signal, not statistical evidence</strong> of production reliability. The 90% threshold must be assessed <em>alongside</em> scenario coverage, failure evidence, and reviewer notes — not as a standalone pass/fail. A strong score with weak coverage is not a green light.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <h4><i>◐</i> Leading indicators (weekly)</h4>
+            <ul>
+              <li>Evidence completeness per incident (target: 100%)</li>
+              <li>Policy reject rate & reasons (expect 10–20% on adversarial inputs)</li>
+              <li>Approval latency (p50 / p95)</li>
+              <li>Idempotency block rate on duplicate injects</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>◎</i> Lagging indicators (end of pilot)</h4>
+            <ul>
+              <li>Scored diagnostic accuracy + inter-rater agreement</li>
+              <li>Median alert→approved-fix delta vs. manual</li>
+              <li>Zero-tolerance violations: count (must be 0)</li>
+              <li>Spend vs. envelope; contingency draw reasons</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- S10 -->
+      <section id="s10" class="section">
+        <div class="section-head"><div class="sec-num">10</div><div><div class="section-kicker">Risks, Assumptions, Issues & Dependencies</div><h2>RAID — what could derail us and what we’ll do</h2></div></div>
+
+        <div class="risk high">
+          <strong>1 • Incorrect AI recommendation → wrong remediation proposed</strong>
+          <p>Impact: High — could mislead approver. Likelihood: Medium.</p>
+          <div class="risk-meta"><span class="tag tag-red">Impact: High</span><span class="tag tag-amber">Likelihood: Med</span><span class="tag tag-slate">Owner: Tech Lead</span></div>
+          <p><strong>Mitigation:</strong> Evidence citations + confidence + approved runbooks required; deterministic allowlist rejects unsupported actions; human approval is mandatory; post-action health checks verify outcome before close.</p>
+        </div>
+        <div class="risk high">
+          <strong>2 • Approval bypass — privileged change without valid approval</strong>
+          <p>Impact: High — breaks trust model. Likelihood: Low if controls hold.</p>
+          <div class="risk-meta"><span class="tag tag-red">Impact: High</span><span class="tag tag-green">Likelihood: Low</span><span class="tag tag-slate">Owner: CI/CD + Security</span></div>
+          <p><strong>Mitigation:</strong> Separate identities, protected environment, proposal-hash binding, 8 adversarial bypass tests (blocking gate). Fail-closed on control unavailability.</p>
+        </div>
+        <div class="risk med">
+          <strong>3 • Sensitive data exposure via logs / prompts</strong>
+          <p>Impact: High — compliance. Likelihood: Medium.</p>
+          <div class="risk-meta"><span class="tag tag-red">Impact: High</span><span class="tag tag-amber">Likelihood: Med</span><span class="tag tag-slate">Owner: Security</span></div>
+          <p><strong>Mitigation:</strong> Synthetic / QI-approved data only; redaction before model call; least privilege; security review at Gate 0 and Gate 4.</p>
+        </div>
+        <div class="risk med">
+          <strong>4 • Prompt injection via telemetry (logs as attack vector)</strong>
+          <p>Impact: Medium. Likelihood: Medium.</p>
+          <div class="risk-meta"><span class="tag tag-amber">Impact: Med</span><span class="tag tag-amber">Likelihood: Med</span><span class="tag tag-slate">Owner: Tech Lead</span></div>
+          <p><strong>Mitigation:</strong> Treat all telemetry as untrusted; never let prompt content alter policy or invoke tools; schema validation + allowlist as hard boundary.</p>
+        </div>
+        <div class="risk med">
+          <strong>5 • Cost overrun (token / log / uptime variance)</strong>
+          <p>Impact: Medium. Likelihood: Medium.</p>
+          <div class="risk-meta"><span class="tag tag-amber">Impact: Med</span><span class="tag tag-amber">Likelihood: Med</span><span class="tag tag-slate">Owner: Platform / Coordinator</span></div>
+          <p><strong>Mitigation:</strong> Progressive scale (2 → ≤20), daily review, token/log budgets, alerts at 50/75/90/100%, pause at 90% pending forecast, tested stop procedure.</p>
+        </div>
+        <div class="risk low">
+          <strong>6 • Missing permissions / quotas — schedule slip</strong>
+          <p>Impact: Medium. Likelihood: Medium.</p>
+          <div class="risk-meta"><span class="tag tag-amber">Impact: Med</span><span class="tag tag-amber">Likelihood: Med</span><span class="tag tag-slate">Owner: Platform</span></div>
+          <p><strong>Mitigation:</strong> Complete preflight before Week-1; quotas checked at Gate 0; no provisioning before green.</p>
+        </div>
+        <div class="risk low">
+          <strong>7 • Duplicate remediation on retried alerts</strong>
+          <p>Impact: Medium. Likelihood: Medium.</p>
+          <div class="risk-meta"><span class="tag tag-amber">Impact: Med</span><span class="tag tag-amber">Likelihood: Med</span><span class="tag tag-slate">Owner: Tech Lead</span></div>
+          <p><strong>Mitigation:</strong> Idempotency keys, concurrency controls, and repeated-delivery testing (blocking gate).</p>
+        </div>
+        <div class="risk med">
+          <strong>8 • Fault testing impacts shared QI resources</strong>
+          <p>Impact: Medium. Likelihood: Low.</p>
+          <div class="risk-meta"><span class="tag tag-amber">Impact: Med</span><span class="tag tag-green">Likelihood: Low</span><span class="tag tag-slate">Owner: Platform</span></div>
+          <p><strong>Mitigation:</strong> Isolated services, bounded fault injection, documented recovery, agreed test windows, no shared prod touch.</p>
+        </div>
+
+        <div class="h3">Key Assumptions (to be validated at Gate 0)</div>
+        <div class="grid grid-2">
+          <div class="card"><p><strong>A1.</strong> GitHub plan supports protected environments + required reviewers for the QI repo. <em>If not → compensating control or plan upgrade decision.</em></p></div>
+          <div class="card"><p><strong>A2.</strong> Vertex AI Gemini quotas and token pricing as estimated. <em>Validate region + model before Week-3.</em></p></div>
+          <div class="card"><p><strong>A3.</strong> Two reviewers available for approvals during test windows. <em>Confirm names at kickoff.</em></p></div>
+          <div class="card"><p><strong>A4.</strong> USD 250 period clarified (full pilot vs. monthly). <em>Blocking for spend authorization.</em></p></div>
+        </div>
+      </section>
+
+      <!-- S11 -->
+      <section id="s11" class="section">
+        <div class="section-head"><div class="sec-num teal">11</div><div><div class="section-kicker">Governance & Operating Model</div><h2>Who decides, who does, who reviews</h2></div></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Role</th><th>Proposed Owner</th><th>Accountability</th><th>RACI*</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Business Sponsors</strong></td><td>Ken / Prithiviraj</td><td>Budget & pilot authorization; final Proceed/Stop decision</td><td><span class="letter l-A">A</span></td></tr>
+              <tr><td><strong>Pilot Coordinator</strong></td><td>Gupteswar Mishra</td><td>Scope, dependencies, stakeholder reviews, final recommendation</td><td><span class="letter l-R">R</span></td></tr>
+              <tr><td><strong>Technical Lead</strong></td><td>Akshay Saxena</td><td>Blueprint, build, integration, scoring & testing</td><td><span class="letter l-R">R</span></td></tr>
+              <tr><td><strong>Cloud / Platform</strong></td><td>Assigned Engineer</td><td>GCP project, billing, IAM, quotas, infra, cost monitoring</td><td><span class="letter l-R">R</span></td></tr>
+              <tr><td><strong>CI/CD Owner</strong></td><td>Assigned Engineer</td><td>Workflow integration, approval gates, deployment perms</td><td><span class="letter l-R">R</span></td></tr>
+              <tr><td><strong>Security Reviewer</strong></td><td>Assigned Reviewer</td><td>Data handling, access controls, guardrails, bypass review</td><td><span class="letter l-C">C</span></td></tr>
+              <tr><td><strong>Remediation Approvers</strong></td><td>Named Engineers (≥2)</td><td>Approve / reject each privileged proposal</td><td><span class="letter l-A">A</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:12px;color:var(--slate);margin-top:6px">* RACI highlights primary accountability per activity; detailed RACI matrix to be confirmed at kickoff. Named owners & approvers must be confirmed before Gate 0. Roles may combine only where separation-of-duties remains satisfied.</p>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <h4><i>◎</i> Operating cadence</h4>
+            <ul>
+              <li><strong>Daily stand-up</strong> (15 min) during build & fault-testing weeks</li>
+              <li><strong>Weekly steering</strong> with sponsors + security (30 min) — gate reviews, spend, risks</li>
+              <li><strong>Gate reviews</strong> at 0,1,2,3,4,5,6 — written sign-off, not verbal</li>
+              <li><strong>Incident review</strong>: every scored run has a one-paragraph debrief (what worked, what failed)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4><i>⬡</i> Controls & assurance</h4>
+            <ul>
+              <li>Separation of duties: proposer ≠ approver ≠ executor</li>
+              <li>All privileged actions traceable: evidence → proposal → approval → workflow → health check → outcome</li>
+              <li>Retention limits enforced; audit logs cost-assessed before broad enablement</li>
+              <li>GSK-separation attestation filed at Gate 6</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Decisions -->
+      <section id="decisions" class="section" style="background:var(--slate-50);border:1px solid var(--border);border-radius:16px;padding:20px">
+        <div class="section-head"><div class="sec-num" style="background:var(--gold);color:var(--navy)">12</div><div><div class="section-kicker" style="color:var(--gold-dark)">Decisions Requested & Next Steps</div><h2>What we need from you — this week</h2></div></div>
+        <div class="table-wrap" style="margin-top:12px">
+          <table>
+            <thead><tr><th>#</th><th>Decision</th><th>Options</th><th>Required By</th></tr></thead>
+            <tbody>
+              <tr><td><strong>D1</strong></td><td>Approve QI-only pilot scope; explicitly exclude GSK</td><td>Approve / Amend / Reject</td><td>Sponsors — before Gate 0</td></tr>
+              <tr><td><strong>D2</strong></td><td>Confirm USD 250 period (full 4–6 weeks vs. monthly)</td><td>Full pilot / Monthly / Revised ceiling</td><td>Sponsors + Finance — before Gate 0</td></tr>
+              <tr><td><strong>D3</strong></td><td>Confirm named owners, authorized approvers & escalation contacts</td><td>Names + backups</td><td>Coordinator — kickoff</td></tr>
+              <tr><td><strong>D4</strong></td><td>Confirm GitHub plan supports required approval controls</td><td>Confirm / Compensating control / Upgrade</td><td>CI/CD Owner — Gate 0</td></tr>
+              <tr><td><strong>D5</strong></td><td>Approve synthetic / QI-approved data use with Vertex AI + redaction</td><td>Approve / Amend data scope</td><td>Security + Sponsors — Gate 0</td></tr>
+              <tr><td><strong>D6</strong></td><td>Authorize provisioning only after readiness gate (Gate 0)</td><td>Authorize / Conditional</td><td>Sponsors — Gate 0 sign-off</td></tr>
+              <tr><td><strong>D7</strong></td><td>Require final review before any extension, prod rollout, or GSK proposal</td><td>Mandate separate approvals</td><td>Sponsors — standing</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-2" style="margin-top:14px">
+          <div class="card" style="background:white">
+            <h4><i>▶</i> Recommendation (Tier-1 view)</h4>
+            <p><strong>Conditionally approve</strong> the pilot in principle. Begin with <strong>2 services + recommendation-only</strong> flow. Enable privileged remediation <em>only after</em> IAM isolation, approval enforcement, auditability, and all negative tests pass. Keep spend within the confirmed envelope and document every limitation. A successful QI pilot <strong>does not</strong> authorize GSK work.</p>
+          </div>
+          <div class="card" style="background:var(--navy);color:white;border-color:var(--navy)">
+            <h4 style="color:white"><i style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.18);color:white">◈</i> <span style="color:white">Immediate next steps (5 days)</span></h4>
+            <ul style="color:#DBEAFE">
+              <li><strong style="color:white">Day 1–2:</strong> Decision log (D1–D7) + named RACI + approver list</li>
+              <li><strong style="color:white">Day 3:</strong> Gate 0 preflight (IAM, WIF, quotas, GitHub protections)</li>
+              <li><strong style="color:white">Day 4:</strong> Security review of data-handling & redaction</li>
+              <li><strong style="color:white">Day 5:</strong> Gate 0 sign-off → authorize provisioning → Week 1 starts</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout callout-green" style="margin-bottom:0">
+          <i>✓</i>
+          <div>
+            <h4>What “conditional” means here</h4>
+            <p>Approval to <em>prepare</em> is not approval to <em>execute privileged changes</em>. The second authorization is gated by evidence — specifically, the bypass-test report at Gate 4. Sponsors retain a stop/pause right at any gate.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Appendix -->
+      <section id="appendix" class="section">
+        <div class="section-head"><div class="sec-num">A</div><div><div class="section-kicker">Appendices</div><h2>Reference, assumptions & traceability</h2></div></div>
+
+        <div class="h3">Appendix A — Reference Documentation</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Topic</th><th>Reference</th></tr></thead>
+            <tbody>
+              <tr><td>Workload Identity Federation — security best practices</td><td><a href="https://docs.cloud.google.com/iam/docs/best-practices-for-using-workload-identity-federation" target="_blank">Google Cloud — WIF best practices</a></td></tr>
+              <tr><td>Service accounts — security best practices</td><td><a href="https://docs.cloud.google.com/iam/docs/best-practices-service-accounts" target="_blank">Google Cloud — Service accounts</a></td></tr>
+              <tr><td>Deployment protection & approvals</td><td><a href="https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments" target="_blank">GitHub Actions — Deployment protection</a></td></tr>
+              <tr><td>Billing budgets & alerts</td><td><a href="https://docs.cloud.google.com/billing/docs/how-to/budgets" target="_blank">Google Cloud — Budgets & alerts</a></td></tr>
+              <tr><td>SAP / Grafana / Vertex AI implementation details</td><td>To be finalized during technical design & preflight validation (Gate 0–1)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="h3">Appendix B — Proposal Schema & Allowlist (illustrative)</div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h4><i>▭</i> Proposal record (required fields)</h4>
+            <p><code>incident_id</code> • <code>target {service, region, revision}</code> • <code>action_type (allowlist enum)</code> • <code>exact_params</code> • <code>evidence_citations[]</code> • <code>confidence</code> • <code>risk</code> • <code>validation_result</code> • <code>rollback_plan</code> • <code>proposal_hash</code> • <code>idempotency_key</code></p>
+            <p style="margin-top:8px;font-size:12px;color:var(--slate)">Approval is bound to <code>proposal_hash</code>. Any mutation → new hash → re-approval required.</p>
+          </div>
+          <div class="card">
+            <h4><i>⬢</i> Workflow spec (predefined)</h4>
+            <ul>
+              <li>Single protected workflow: <code>.github/workflows/remediate.yml</code> on protected branch + environment</li>
+              <li>Inputs validated against allowlist before execution; unknown inputs → fail</li>
+              <li>Executor SA: narrow resource permissions, 15-min TTL, no cross-project</li>
+              <li>Post-action: health check + audit record (actor, evidence, decision, outcome)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="h3">Appendix C — Cost Model Assumptions</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Assumption</th><th>Value Used</th><th>Sensitivity</th></tr></thead>
+            <tbody>
+              <tr><td>Cloud Run services</td><td>2 → 10–20, scale-to-zero, &lt;1 vCPU avg</td><td>Linear if scale-to-zero fails</td></tr>
+              <tr><td>Grafana uptime</td><td>Test windows + limited 24/7; small VM</td><td>×2 if 24/7 on larger host</td></tr>
+              <tr><td>Vertex AI tokens</td><td>Bounded evidence (~4–8k in, ~1–2k out per incident), limited retries</td><td>±40% if bounds loosen</td></tr>
+              <tr><td>Log retention</td><td>7 days pilot; no broad Data Access logs</td><td>+30–50% at 30d or broad audit</td></tr>
+              <tr><td>Regions</td><td>2 (us-east1, us-central1) — no multi-region failover test</td><td>Cost doubles if 3+ regions</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="h3">Appendix D — Test Scenarios & Scoring Protocol</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Scenario</th><th>Fault Injected</th><th>Expected Diagnosis</th><th>Scoring</th></tr></thead>
+            <tbody>
+              <tr><td>S1</td><td>Bad deployment</td><td>Push faulty revision (500s spike)</td><td>Regression to revision N-1; evidence: error rate + deploy timestamp</td><td>Primary diagnosis correct?</td></tr>
+              <tr><td>S2</td><td>Startup failure / crash loop</td><td>Bad env var / missing secret</td><td>Startup probe failure; evidence: crash log + config diff</td><td>Primary diagnosis correct?</td></tr>
+              <tr><td>S3</td><td>Quota exhaustion</td><td>Throttle to quota limit</td><td>Quota metric + throttling log; no infra change recommended</td><td>Allowlist respected?</td></tr>
+              <tr><td>S4</td><td>Disabled API</td><td>Disable dependent API</td><td>API disabled error; evidence: audit log + API state</td><td>Citations present?</td></tr>
+              <tr><td>S5</td><td>Configuration drift</td><td>Drift flag / traffic split error</td><td>Config diff + mismatch; bounded remediation</td><td>Params in scope?</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:12px;color:var(--slate);margin-top:8px">Each scenario run is scored blind against ground truth. Live vs. simulated evidence is labelled. A run scores “correct” only if primary diagnosis matches and citations support it. Negative tests (approval rejection, duplicate, invalid model output, workflow failure) are scored separately as pass/fail on enforcement.</p>
+
+        <div class="h3">Appendix E — Document Control</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Version</th><th>Date</th><th>Author</th><th>Changes</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>v1.0</td><td>16 Oct 2026</td><td>Gupteswar Mishra</td><td>Initial working draft (7 pages)</td><td>Superseded</td></tr>
+              <tr style="background:#ECFDF5"><td><strong>v2.0</strong></td><td><strong>16 Oct 2026</strong></td><td><strong>QI — Enhanced by Tier-1 Restructure</strong></td><td><strong>Full restructure: pyramid summary, zero-trust detail, stage gates with exit criteria, unit-economics, RAID, RACI, approval matrix, appendices; visual system upgrade — substance preserved</strong></td><td><span class="tag tag-green">Current — Awaiting approval</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-blue">
+          <i>ℹ</i>
+          <div>
+            <h4>How to use this document</h4>
+            <p><strong>Executives:</strong> Read cover + §0 + §12. <strong>Engineering & Security:</strong> §4–§6. <strong>Finance & Platform:</strong> §8. <strong>All reviewers:</strong> §9–§11. Print via the top-right button — this page is print-optimized to A4 with page breaks.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+      <div style="text-align:center;padding:12px;background:var(--slate-50);border:1px solid var(--border);border-radius:10px">
+        <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:800;color:var(--navy)">Quantum Integrators — Internal Proposal</div>
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-top:2px">AI SRE Copilot — Dev Pilot • QI-AI-SRE-2026-001 • v2.0 Enhanced</div>
+        <div style="font-size:11px;color:var(--slate);margin-top:4px">Confidential • QI Internal • GSK Excluded • 16 October 2026 • Prepared by Gupteswar Mishra & Akshay Saxena • Sponsors: Ken / Prithiviraj</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--slate-light)">This enhanced edition preserves all substance from v1.0 and elevates it for executive, audit, and client-readiness review. Original retained as <code>AI_SRE_Copilot_Dev_Pilot_Proposal_QI.pdf</code>.</div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-grid">
+    <div>
+      <strong style="color:var(--navy)">Quantum Integrators — Confidential</strong> • QI Internal Development Pilot — GSK implementation excluded.<br>
+      This proposal covers a controlled development pilot in QI’s internal GCP environment only. It does not authorize access to, deployment in, or use of credentials or data from GSK. Any future GSK implementation requires separate architecture, security, access, budget, and go-live approvals.<br>
+      <span style="color:var(--slate-light)">Enhanced Tier-1 Edition v2.0 • 16 Oct 2026 • QI-AI-SRE-2026-001 • Supersedes v1.0 • For internal distribution only.</span>
+    </div>
+    <div style="text-align:right">
+      <div style="font-weight:800;color:var(--navy)">Page — Print to paginate</div>
+      <div>References: WIF, SA, GitHub Environments, Cloud Billing budgets — see Appendix A.</div>
+      <div style="margin-top:6px"><span class="tag tag-slate">AI proposes</span> <span class="tag tag-slate">Policy validates</span> <span class="tag tag-slate">Human approves</span> <span class="tag tag-slate">Workflow executes</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Simple TOC active state
+const sections = [...document.querySelectorAll('.section')];
+const tocLinks = [...document.querySelectorAll('.toc-list a')];
+const byId = Object.fromEntries(tocLinks.map(a=>[a.getAttribute('href'),a]));
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      tocLinks.forEach(a=>a.classList.remove('active'));
+      const id = '#'+e.target.id;
+      if(byId[id]) byId[id].classList.add('active');
+    }
+  });
+},{rootMargin:'-40% 0px -50% 0px',threshold:0});
+sections.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>
